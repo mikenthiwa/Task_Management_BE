@@ -7,11 +7,21 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
       <PackageReference Include="Microsoft.Extensions.Hosting" />
+      <PackageReference Include="SharpGrip.FluentValidation.AutoValidation.Endpoints" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Domain\Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Common\Interfaces\" />
+      <Folder Include="Common\Mappings\" />
+      <Folder Include="Common\Repository\" />
+      <Folder Include="Common\Security\" />
+      <Folder Include="Features\" />
     </ItemGroup>
 
 </Project>
