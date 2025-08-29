@@ -1,11 +1,11 @@
 using Infrastructure.Data;
-using Infrastructure.Identity;
+using Task_Management_BE.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddApplicationServices();
-builder.AddInfrastructureServices();
-builder.AddWebServices();
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddWebServices();
 
 
 var app = builder.Build();
@@ -15,11 +15,18 @@ if (app.Environment.IsDevelopment())
 {
     await app.InitializeDatabaseAsync();
     app.MapOpenApi();
+    app.UseOpenApi();
 }
 
-app.MapIdentityApi<ApplicationUser>();
+app.UseSwaggerUi(settings =>
+{
+    settings.Path = "/api";
+});
+
+
 app.UseHttpsRedirection();
 app.UseExceptionHandler(options => { });
+app.MapEndpoints();
 
 app.Run();
 
