@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+        <PackageReference Include="NSwag.AspNetCore" />
     </ItemGroup>
 
     <ItemGroup>
@@ -18,7 +19,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Endpoints\" />
       <Folder Include="Services\" />
     </ItemGroup>
 
