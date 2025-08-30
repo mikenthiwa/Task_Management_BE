@@ -24,8 +24,8 @@ app.UseSwaggerUi(settings =>
 });
 
 
-app.UseHttpsRedirection();
 app.UseExceptionHandler(options => { });
+app.UseHttpsRedirection();
 app.MapEndpoints();
 
 app.Run();
