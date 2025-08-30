@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TaskItem = Domain.Entities.Task;
 
 namespace Infrastructure.Data;
 
@@ -66,6 +67,38 @@ public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitial
             {
                 await userManager.AddToRolesAsync(administrator, new [] { administratorRole.Name });
             }
+        }
+        
+        var userRole = new IdentityRole(Roles.User);
+        if (roleManager.Roles.All(r => r.Name != userRole.Name))
+        {
+            await roleManager.CreateAsync(userRole);
+        }
+        
+        var user = new ApplicationUser() { UserName = "user", Email = "user@localhost" };
+        if (userManager.Users.All(u => u.UserName != user.UserName))
+        {
+            await userManager.CreateAsync(user, "User1!");
+            if (!string.IsNullOrWhiteSpace(userRole.Name))
+            {
+                await userManager.AddToRolesAsync(user, new [] { userRole.Name });
+            }
+        }
+        
+        // Seed, Tasks
+        if (!dbContext.Tasks.Any())
+        {
+            dbContext.Tasks.Add(
+                new TaskItem
+                {
+                    Title = "First Task",
+                    Description = "This is the first task.",
+                    Status = 0,
+                    Priority = 0,
+                    CreatorId = administrator.Id,
+                    AssigneeId = user.Id
+                }
+            );
         }
         
         await dbContext.SaveChangesAsync();

@@ -22,6 +22,7 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
         { 
             return false;
         }
+        Console.WriteLine($">>>>>>>>>>>>>>>>>{exception}");
         logger.LogError(exception, "An unhandled exception occurred: {Message}", exception.Message);
         await _exceptionHandlers[exceptionType].Invoke(httpContext, exception);
         return true;
