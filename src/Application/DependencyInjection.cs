@@ -2,7 +2,6 @@ using System.Reflection;
 using Application.Common.Factory;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 
 namespace Application;
