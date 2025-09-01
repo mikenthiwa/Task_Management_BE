@@ -1,4 +1,5 @@
 using Application.Common.Exceptions;
+using Application.Models;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ValidationException = Application.Common.Exceptions.ValidationException;
@@ -31,19 +32,16 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
     {
         var exception = (ValidationException)ex;
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-        var validationException = ex as ValidationException;
-
         await httpContext.Response.WriteAsJsonAsync(new ValidationProblemDetails(exception.Errors)
         {
             Status = StatusCodes.Status400BadRequest,
-            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
         });
     }
 
     private static async Task HandleNotFoundException(HttpContext httpContext, Exception ex)
     {
         var exception = (KeyNotFoundException)ex;
-
         httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
 
         await httpContext.Response.WriteAsJsonAsync(new ProblemDetails()

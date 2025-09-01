@@ -8,11 +8,11 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> entity)
     {
-        entity.Ignore(e => e.PhoneNumber);
-        entity.Ignore(e => e.PhoneNumberConfirmed);
-        entity.Ignore(e => e.TwoFactorEnabled);
-        entity.Ignore(e => e.LockoutEnd);
-        entity.Ignore(e => e.LockoutEnabled);
-        entity.Ignore(e => e.AccessFailedCount);
+        // entity.Ignore(e => e.PhoneNumber);
+        // entity.Ignore(e => e.PhoneNumberConfirmed);
+        // entity.Ignore(e => e.TwoFactorEnabled);
+        // entity.Ignore(e => e.LockoutEnd);
+        // entity.Ignore(e => e.LockoutEnabled);
+        // entity.Ignore(e => e.AccessFailedCount);
     }
 }
