@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddOpenApi();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddEndpointsApiExplorer();
+        services.AddProblemDetails();
         services.AddOpenApiDocument((configure, sp) =>
         {
             configure.Title = "Task Management API";

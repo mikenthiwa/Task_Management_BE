@@ -59,10 +59,10 @@ public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitial
             await roleManager.CreateAsync(administratorRole);
         }
         
-        var administrator = new ApplicationUser() { UserName = "administrator", Email = "administrator@localhost" };
+        var administrator = new ApplicationUser() { UserName = "administrator", Email = "administrator@localhost", EmailConfirmed = true};
         if (userManager.Users.All(u => u.UserName != administrator.UserName))
         {
-            await userManager.CreateAsync(administrator, "Administrator1!");
+            await userManager.CreateAsync(administrator, "Kenya2019%");
             if (!string.IsNullOrWhiteSpace(administratorRole.Name))
             {
                 await userManager.AddToRolesAsync(administrator, new [] { administratorRole.Name });
