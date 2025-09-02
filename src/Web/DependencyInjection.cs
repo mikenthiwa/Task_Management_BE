@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc;
 using NSwag;
 using Web.Infrastructure;
 
@@ -11,6 +13,7 @@ public static class DependencyInjection
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddEndpointsApiExplorer();
         services.AddProblemDetails();
+        
         services.AddOpenApiDocument((configure, sp) =>
         {
             configure.Title = "Task Management API";
@@ -22,5 +25,11 @@ public static class DependencyInjection
                 Description = "Type into the textbox: Bearer {your JWT token}."
             });
         });
+        services.Configure<JsonOptions>(options =>
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter())
+        );
+        services.ConfigureHttpJsonOptions(options =>
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter())
+        );
     }
 }
