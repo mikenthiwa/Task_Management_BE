@@ -13,6 +13,7 @@ public static class DependencyInjection
         // Add application services here
         var assembly = Assembly.GetExecutingAssembly();
         services.AddValidatorsFromAssembly(assembly);
+        services.AddAutoMapper(assembly);
         services.AddFluentValidationAutoValidation(configuration =>
         {
             configuration.OverrideDefaultResultFactoryWith<CustomResultFactory>();

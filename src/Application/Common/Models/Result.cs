@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Application.Models;
 
 
@@ -22,9 +24,11 @@ public class Result
 public class Result<T> : Result
 {
     public T? Data { get; set; }
-
+    
     public static Result<T> SuccessResponse(int statusCode, string message, T data)
     {
         return new Result<T>() { Success = true, StatusCode = statusCode, Message = message, Data = data };
     }
+    
+    
 }
