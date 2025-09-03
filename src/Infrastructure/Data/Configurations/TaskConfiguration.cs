@@ -7,20 +7,25 @@ namespace Infrastructure.Data.Configurations;
 
 public class TaskConfiguration : IEntityTypeConfiguration<Task>
 {
-    public void Configure(EntityTypeBuilder<Task> entity)
+    public void Configure(EntityTypeBuilder<Task> builder)
     {
-        entity.HasOne<ApplicationUser>()
-            .WithMany()
-            .HasForeignKey(t => t.AssigneeId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.ToTable("Tasks");
 
-        entity.HasOne<ApplicationUser>()
-            .WithMany()
-            .HasForeignKey(t => t.CreatorId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(task => task.Assignee)
+            .WithMany(u => u.AssignedTasks)
+            .HasForeignKey(t => t.AssigneeId)
+            .HasPrincipalKey(u => u.Id)
+            .OnDelete(DeleteBehavior.SetNull);
         
-        entity.HasIndex(t => t.AssigneeId);
-        entity.HasIndex(t => t.CreatorId);
-        entity.HasIndex(t => new { t.Status, t.Priority });
+        builder.HasOne(task => task.Creator)
+            .WithMany(u => u.CreatedTasks)
+            .HasForeignKey(t => t.CreatorId)
+            .HasPrincipalKey(u => u.Id)
+            .OnDelete(DeleteBehavior.SetNull);
+        
+        
+        builder.HasIndex(t => t.AssigneeId);
+        builder.HasIndex(t => t.CreatorId);
+        builder.HasIndex(t => new { t.Status, t.Priority });
     }
 }
