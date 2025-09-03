@@ -1,5 +1,6 @@
 using Application.Common.Exceptions;
 using Application.Models;
+using Ardalis.GuardClauses;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ValidationException = Application.Common.Exceptions.ValidationException;
@@ -11,7 +12,7 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
     private readonly Dictionary<Type, Func<HttpContext, Exception, Task>> _exceptionHandlers = new()
     {
         { typeof(ValidationException), HandleValidationException },
-        { typeof(KeyNotFoundException), HandleNotFoundException },
+        { typeof(NotFoundException), HandleNotFoundException },
         { typeof(UnauthorizedAccessException), HandleUnauthorizedAccessException },
         { typeof(ForbiddenAccessException), HandleForbiddenAccessException },
     };

@@ -1,9 +1,11 @@
 using Domain.Constants;
+using Domain.Entities;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Task = System.Threading.Tasks.Task;
 using TaskItem = Domain.Entities.Task;
 
 namespace Infrastructure.Data;
@@ -67,6 +69,12 @@ public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitial
             {
                 await userManager.AddToRolesAsync(administrator, new [] { administratorRole.Name });
             }
+
+            if (!dbContext.DomainUsers.Any(u => u.Id == administrator.Id))
+            {
+                dbContext.DomainUsers.Add(new DomainUser(administrator.Id, administrator.UserName));
+            }
+            
         }
         
         var userRole = new IdentityRole(Roles.User);
@@ -83,7 +91,13 @@ public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitial
             {
                 await userManager.AddToRolesAsync(user, new [] { userRole.Name });
             }
+
+            if (!dbContext.DomainUsers.Any(u => u.Id == user.Id))
+            {
+                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName));
+            }
         }
+        
         
         // Seed, Tasks
         if (!dbContext.Tasks.Any())

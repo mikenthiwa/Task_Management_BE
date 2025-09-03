@@ -1,4 +1,5 @@
 using Application.Common.Models;
+using Application.Features.Tasks.Command.AssignTask;
 using Application.Features.Tasks.Command.CreateTask;
 using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
 using Application.Models;
@@ -24,6 +25,10 @@ public class Tasks : EndpointGroupBase
         app.MapGroup(this)
             .MapGet("/", GetTasks);
 
+        app.MapGroup(this)
+            .RequireAuthorization(Policies.CanPurge)
+            .MapPost("/{id}/assign", AssignTask);
+
     }
     
     private async Task<Results<Ok<Result>, BadRequest>> CreateTask(ISender sender, CreateTaskCommand command)
@@ -43,5 +48,14 @@ public class Tasks : EndpointGroupBase
         var query = new GetTaskWithQuery { Status = status, AssigneeId = assignedId, PageNumber = pageNumber ?? 1, PageSize = pageSize ?? 10 };
         var result = await sender.Send(query);
         return TypedResults.Ok(Result<PaginatedList<TaskDto>>.SuccessResponse(200, "Tasks retrieved successfully", result));
+    }
+
+    private async Task<Results<Ok<Result<TaskDto>>, BadRequest>> AssignTask(
+        ISender sender,
+        AssignTaskCommand command 
+    )
+    {
+        var result = await sender.Send(command);
+        return TypedResults.Ok(Result<TaskDto>.SuccessResponse(200, "Task assigned successfully", result));
     }
 }
