@@ -43,6 +43,7 @@ public static class DependencyInjection
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator))
         );
         services.AddTransient<IIdentityService, IdentityService>();
+        services.AddScoped<UserManager<ApplicationUser>, ApplicationUserManager>();
 
     }
 }
