@@ -5,9 +5,13 @@ namespace Application.Models;
 
 public class Result
 {
+    [JsonPropertyOrder(0)]
     public bool Success { get; set; }
+    [JsonPropertyOrder(1)]
     public int StatusCode { get; set; }
+    [JsonPropertyOrder(2)]
     public string? Message { get; set; }
+    [JsonPropertyOrder(3)]
     public IDictionary<string, string[]>? Errors { get; set; }
     
     public static Result SuccessResponse(int statusCode, string message)
@@ -23,6 +27,7 @@ public class Result
 
 public class Result<T> : Result
 {
+    [JsonPropertyOrder(4)]
     public T? Data { get; set; }
     
     public static Result<T> SuccessResponse(int statusCode, string message, T data)
