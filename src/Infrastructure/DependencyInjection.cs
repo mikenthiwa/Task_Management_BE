@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Infrastructure.Data.Interceptors;
 using Infrastructure.Identity;
 using Infrastructure.Security;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,10 @@ public static class DependencyInjection
         services.AddSingleton<IAuthorizationMiddlewareResultHandler, ApiAuthResultHandler>();
         services.AddAuthentication()
             .AddBearerToken(IdentityConstants.BearerScheme);
+        services.AddOptions<BearerTokenOptions>(IdentityConstants.BearerScheme).Configure(opt =>
+        {
+            opt.BearerTokenExpiration = TimeSpan.FromMinutes(2);
+        });
 
         services.AddIdentityCore<ApplicationUser>()
             .AddRoles<IdentityRole>()
@@ -44,6 +49,5 @@ public static class DependencyInjection
         );
         services.AddTransient<IIdentityService, IdentityService>();
         services.AddScoped<UserManager<ApplicationUser>, ApplicationUserManager>();
-
     }
 }

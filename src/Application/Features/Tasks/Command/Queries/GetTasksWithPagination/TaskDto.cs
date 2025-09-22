@@ -15,21 +15,22 @@ public class TaskDto
     public string? AssigneeId { get; set; }
     [JsonIgnore]
     public string? CreatorId { get; set; }
+
     public string? AssignedTo { get; set; }
     public string? Creator { get; set; }
-    
+
 
     public class Mapping : Profile
     {
         public Mapping()
         {
             CreateMap<Task, TaskDto>()
-                .ForMember(
-                    d => d.AssignedTo, o => o.MapFrom(s => s.Assignee != null ? s.Assignee.Username : null)
-                )
-                .ForMember(
-                    d => d.Creator,  o => o.MapFrom(s => s.Creator != null ? s.Creator.Username : null)
-                );
+            .ForMember(
+                d => d.AssignedTo, o => o.MapFrom(s => s.Assignee != null ? s.Assignee.Username : null)
+            )
+            .ForMember(
+                d => d.Creator,  o => o.MapFrom(s => s.Creator != null ? s.Creator.Username : null)
+            );
         }
     }
 }
