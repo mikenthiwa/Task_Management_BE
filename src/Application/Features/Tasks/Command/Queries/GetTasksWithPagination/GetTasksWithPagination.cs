@@ -21,7 +21,7 @@ public class GetTasksWithPaginationHandler(IApplicationDbContext context, IMappe
     {
         return await context.Tasks
             .TaskQuery(request)
-            .OrderBy(t => t.Title)
+            .OrderBy(t => t.Id)
             .ProjectTo<TaskDto>(mapper.ConfigurationProvider)
             .PaginatedListAsync(request.PageNumber, request.PageSize);
     }

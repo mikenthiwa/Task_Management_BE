@@ -34,11 +34,11 @@ public class ApplicationUserManager(
 
     private async Task<IdentityResult> MirrorToDomainAsync(ApplicationUser user, IdentityResult result)
     {
-        if (string.IsNullOrEmpty(user.Id) || string.IsNullOrEmpty(user.UserName)) return result;
+        if (string.IsNullOrEmpty(user.Id) || string.IsNullOrEmpty(user.UserName) || string.IsNullOrEmpty(user.Email)) return result;
 
         var exist = await _db.DomainUsers.AnyAsync(u => u.Id == user.Id);
         if(exist) return result;
-        _db.DomainUsers.Add(new DomainUser(user.Id, user.UserName));
+        _db.DomainUsers.Add(new DomainUser(user.Id, user.UserName, user.Email));
         try
         {
             await _db.SaveChangesAsync();
