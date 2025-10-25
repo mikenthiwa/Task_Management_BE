@@ -5,7 +5,6 @@ using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
 using Application.Models;
 using Domain.Constants;
 using Domain.Enum;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
@@ -23,6 +22,7 @@ public class Tasks : EndpointGroupBase
             .MapPost("/", CreateTask);
 
         app.MapGroup(this)
+            .RequireAuthorization()
             .MapGet("/", GetTasks);
 
         app.MapGroup(this)

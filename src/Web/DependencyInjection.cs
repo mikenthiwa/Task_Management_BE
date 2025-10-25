@@ -31,5 +31,14 @@ public static class DependencyInjection
         services.ConfigureHttpJsonOptions(options =>
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter())
         );
+        services.AddCors(options =>
+        {
+            options.AddPolicy("MyAllowSpecificOrigins", builder =>
+            {
+                builder.WithOrigins("http://localhost:3000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
     }
 }

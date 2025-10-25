@@ -9,7 +9,7 @@ public class UserConfiguration : IEntityTypeConfiguration<DomainUser>
 {
     public void Configure(EntityTypeBuilder<DomainUser> builder)
     {
-        builder.ToTable("Users");
+        builder.ToTable("DomainUsers");
         builder.HasKey(u => u.Id);
 
         builder.HasOne<ApplicationUser>()

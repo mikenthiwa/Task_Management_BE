@@ -72,7 +72,7 @@ public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitial
 
             if (!dbContext.DomainUsers.Any(u => u.Id == administrator.Id))
             {
-                dbContext.DomainUsers.Add(new DomainUser(administrator.Id, administrator.UserName));
+                dbContext.DomainUsers.Add(new DomainUser(administrator.Id, administrator.UserName, administrator.Email));
             }
             
         }
@@ -94,7 +94,7 @@ public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitial
 
             if (!dbContext.DomainUsers.Any(u => u.Id == user.Id))
             {
-                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName));
+                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, administrator.Email));
             }
         }
         
@@ -102,19 +102,21 @@ public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitial
         // Seed, Tasks
         if (!dbContext.Tasks.Any())
         {
-            dbContext.Tasks.Add(
-                new TaskItem
-                {
-                    Title = "First Task",
-                    Description = "This is the first task.",
-                    Status = 0,
-                    Priority = 0,
-                    CreatorId = administrator.Id,
-                    AssigneeId = user.Id
-                }
-            );
+            for (int i = 1; i <= 15; i++)
+            {
+                dbContext.Tasks.Add(
+                    new TaskItem
+                    {
+                        Title = $"Task {i}",
+                        Description = $"This is task number {i}.",
+                        Status = 0,
+                        Priority = 0,
+                        CreatorId = administrator.Id,
+                        AssigneeId = user.Id
+                    }
+                );
+            }
         }
-        
         await dbContext.SaveChangesAsync();
     }
     
