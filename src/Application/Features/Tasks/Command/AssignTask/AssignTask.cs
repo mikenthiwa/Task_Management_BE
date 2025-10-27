@@ -8,7 +8,7 @@ namespace Application.Features.Tasks.Command.AssignTask;
 
 public record AssignTaskCommand : IRequest<TaskDto>
 {
-    public int TaskId { get; init; }
+    [FromRoute] public int TaskId { get; set; }
     public required string AssignedId { get; init; }
 }
 public class AssignTaskCommandHandler(IApplicationDbContext applicationDb, IMapper mapper) : IRequestHandler<AssignTaskCommand, TaskDto>

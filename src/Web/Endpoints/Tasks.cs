@@ -27,8 +27,7 @@ public class Tasks : EndpointGroupBase
 
         app.MapGroup(this)
             .RequireAuthorization(Policies.CanPurge)
-            .MapPost("/{id}/assign", AssignTask);
-
+            .MapPost("/{taskId:int}/assign", AssignTask);
     }
     
     private async Task<Results<Ok<Result>, BadRequest>> CreateTask(ISender sender, CreateTaskCommand command)
@@ -51,10 +50,12 @@ public class Tasks : EndpointGroupBase
     }
 
     private async Task<Results<Ok<Result<TaskDto>>, BadRequest>> AssignTask(
+        [FromRoute] int taskId,
         ISender sender,
-        AssignTaskCommand command 
+        [FromBody] AssignTaskCommand command
     )
     {
+        command.TaskId = taskId;
         var result = await sender.Send(command);
         return TypedResults.Ok(Result<TaskDto>.SuccessResponse(200, "Task assigned successfully", result));
     }
