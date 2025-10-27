@@ -18,4 +18,6 @@ public class IdentityService(UserManager<ApplicationUser> userManager) : IIdenti
         var result = await userManager.CreateAsync(user, password);
         return result.ToApplicationResult();
     }
+
+    
 }
