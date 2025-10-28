@@ -21,6 +21,7 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
                                ?? throw new InvalidOperationException("Connection string 'TodoDb' not found.");
+        Console.WriteLine($"Database connection >>>>>>>>>>: {connectionString}");
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
