@@ -1,0 +1,24 @@
+# Build output
+**/bin/
+**/obj/
+artifacts/
+
+# IDE & user settings
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# Git
+.git/
+.gitignore
+
+# Docker artifacts
+Dockerfile*
+docker-compose*.yml
+
+# Misc
+node_modules/
+logs/
+*.swp
