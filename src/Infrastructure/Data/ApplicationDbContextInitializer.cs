@@ -3,8 +3,11 @@ using Domain.Entities;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Task = System.Threading.Tasks.Task;
 using TaskItem = Domain.Entities.Task;
 
@@ -16,22 +19,38 @@ public static class InitializerExtensions
     {
         using var scope = application.Services.CreateScope();
         var initializer = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitializer>();
-        
-        await initializer.InitializeAsync();
-        await initializer.SeedAsync();
+        var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var shouldSeed = environment.IsDevelopment() || configuration.GetValue<bool?>("SeedData:Enabled") == true;
+
+        await initializer.InitializeAsync(environment.IsDevelopment());
+        await initializer.SeedAsync(shouldSeed, environment.IsDevelopment());
     }
 }
 
-public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitializer> logger, ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+public class ApplicationDbContextInitializer(
+    ILogger<ApplicationDbContextInitializer> logger,
+    ApplicationDbContext dbContext,
+    UserManager<ApplicationUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    IConfiguration configuration)
 {
     
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(bool isDevelopment)
     {
         try
         {
-            // See https://jasontaylor.dev/ef-core-database-initialisation-strategies
-            await dbContext.Database.EnsureDeletedAsync();
-            await dbContext.Database.EnsureCreatedAsync();
+            if (isDevelopment)
+            {
+                // See https://jasontaylor.dev/ef-core-database-initialisation-strategies
+                await dbContext.Database.EnsureDeletedAsync();
+                await dbContext.Database.EnsureCreatedAsync();
+            }
+            else
+            {
+                Console.WriteLine("This line should be running in PROD!");
+                await dbContext.Database.MigrateAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -40,11 +59,16 @@ public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitial
         }
     }
 
-    public async Task SeedAsync()
+    public async Task SeedAsync(bool shouldSeed, bool isDevelopment)
     {
         try
         {
-            await TrySeedAsync();
+            if (!shouldSeed)
+            {
+                return;
+            }
+            
+            await TrySeedAsync(isDevelopment);
         }
         catch (Exception ex)
         {
@@ -53,18 +77,30 @@ public class ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitial
         }
     }
 
-    private async Task TrySeedAsync()
+    private async Task TrySeedAsync(bool isDevelopment)
     {
+        var adminPassword = configuration["SeedData:Admin:Password"];
+        if (string.IsNullOrWhiteSpace(adminPassword))
+        {
+            if (!isDevelopment)
+            {
+                logger.LogWarning("SeedData:Admin:Password is not configured. Skipping default admin creation.");
+                return;
+            }
+
+            adminPassword = "Kenya2019%";
+        }
+        
         var administratorRole = new IdentityRole(Roles.Administrator);
         if (roleManager.Roles.All(r => r.Name != administratorRole.Name))
         {
             await roleManager.CreateAsync(administratorRole);
         }
         
-        var administrator = new ApplicationUser() { UserName = "administrator", Email = "administrator@localhost", EmailConfirmed = true};
+        var administrator = new ApplicationUser() { UserName = "administrator@localhost.com", Email = "administrator@localhost", EmailConfirmed = true};
         if (userManager.Users.All(u => u.UserName != administrator.UserName))
         {
-            await userManager.CreateAsync(administrator, "Kenya2019%");
+            await userManager.CreateAsync(administrator, adminPassword);
             if (!string.IsNullOrWhiteSpace(administratorRole.Name))
             {
                 await userManager.AddToRolesAsync(administrator, new [] { administratorRole.Name });

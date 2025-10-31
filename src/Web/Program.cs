@@ -19,6 +19,7 @@ builder.Services.AddWebServices();
 
 var app = builder.Build();
 
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -34,7 +35,7 @@ app.UseSwaggerUi(settings =>
 
 
 app.UseExceptionHandler(options => { });
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseCors("MyAllowSpecificOrigins");
 app.MapEndpoints();
 
