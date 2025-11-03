@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Ardalis.GuardClauses;
 using Microsoft.AspNetCore.Mvc;
 using NSwag;
 using Web.Infrastructure;
@@ -7,8 +8,10 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class DependencyInjection
 {
-    public static void AddWebServices(this IServiceCollection services)
+    public static void AddWebServices(this IServiceCollection services, IConfiguration configuration)
     {
+        var allowedOrigins = configuration["Cors:AllowedOrigins"]
+            ?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
         services.AddOpenApi();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddEndpointsApiExplorer();
@@ -35,7 +38,8 @@ public static class DependencyInjection
         {
             options.AddPolicy("MyAllowSpecificOrigins", builder =>
             {
-                builder.WithOrigins("http://localhost:3000")
+                var origins = allowedOrigins.Length > 0 ? allowedOrigins : ["http://localhost:3000"];
+                builder.WithOrigins(origins)
                     .AllowAnyHeader()
                     .AllowAnyMethod();
             });

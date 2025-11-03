@@ -9,6 +9,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: ${API_CONNECTION_STRING}
+      Cors__AllowedOrigins: ${ALLOWED_ORIGINS}
     depends_on:
       postgres:
         condition: service_healthy

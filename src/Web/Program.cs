@@ -14,16 +14,16 @@ if (builder.Environment.IsDevelopment() && !runningInContainer)
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
-builder.Services.AddWebServices();
+builder.Services.AddWebServices(builder.Configuration);
 
 
 var app = builder.Build();
 
+await app.InitializeDatabaseAsync();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    await app.InitializeDatabaseAsync();
     app.MapOpenApi();
     app.UseOpenApi();
 }
