@@ -43,3 +43,26 @@
   ```
   Equivalent environment variable (user secrets, App Service settings, or Docker environment):  
   `Cors__AllowedOrigins="http://localhost:3000;https://app.example.com"`
+
+## Azure Container Deployment
+- Authenticate with Azure and your container registry:
+  ```bash
+  az login
+  az acr login -n <registry-name>
+  ```
+- Build and tag the Docker image using the registry login server (publish as 64-bit Linux for Azure):
+  ```bash
+  docker buildx build --platform linux/amd64 \
+    -t <registry-name>.azurecr.io/task-management-be:latest .
+  ```
+- Push the image to Azure Container Registry:
+  ```bash
+  docker push <registry-name>.azurecr.io/task-management-be:latest
+  ```
+- Configure your hosting target (App Service, Container Apps, or Container Instances) to pull that image and supply required settings via environment variables:
+  - `ASPNETCORE_ENVIRONMENT=Production`
+  - `ConnectionStrings__DefaultConnection=<azure-postgres-connection-string>`
+  - `SeedData__Enabled=true` (optional, run once to seed the admin user)
+  - `SeedData__Admin__Password=<strong-password>` (only when seeding)
+  - `Cors__AllowedOrigins=http://localhost:3000;https://app.example.com`
+- After the first successful start, disable seeding by setting `SeedData__Enabled=false` so the admin isn’t recreated on every restart.
