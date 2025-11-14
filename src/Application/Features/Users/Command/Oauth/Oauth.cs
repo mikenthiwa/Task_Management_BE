@@ -1,27 +1,17 @@
-using System.Runtime.InteropServices.JavaScript;
-using Application.Common.Interfaces;
-using Domain.Entities;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
+using Application.Common.Interfaces;
+using Application.Features.Users.Command.Oauth;
 
-namespace Application.Features.Users.Command.OauthLogin;
+namespace Application.Features.Users.Command.Oauth;
 
-public record OauthLoginCommand : IRequest<TokenSetDto>
+public record OauthCommand : IRequest<TokenSetDto>
 {
     public required string Email { get; init; }
+    public required string Username { get; init; }
 }
-
-public class TokenSetDto
+public class Oauth(IIdentityService identityService, ITokenService tokenService) : IRequestHandler<OauthCommand, TokenSetDto>
 {
-    public required string TokenType { get; init; }
-    public required string AccessToken { get; init; }
-    public required string RefreshToken { get; init; }
-    public required DateTime ExpiresIn { get; init; }
-}
-
-public class OauthLogin(IIdentityService identityService, ITokenService tokenService) : IRequestHandler<OauthLoginCommand, TokenSetDto>
-{
-    public async Task<TokenSetDto> Handle(OauthLoginCommand request, CancellationToken cancellationToken)
+    public async Task<TokenSetDto> Handle(OauthCommand request, CancellationToken cancellationToken)
     {
         var googleUser = new GoogleUserDto { Username = "MichaelNthiwa", Email = "mike.nthiwa@gmail.com" };
         var existingUser = await identityService.GetUserByEmailAsync(googleUser.Email);

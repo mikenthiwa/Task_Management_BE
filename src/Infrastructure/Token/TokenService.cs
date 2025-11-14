@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Application.Common.Interfaces;
+using Ardalis.GuardClauses;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +26,7 @@ public class TokenService(IConfiguration configuration, UserManager<ApplicationU
         };
 
         var applicationUser = user as ApplicationUser ?? await userManager.FindByIdAsync(user.Id)
-            ?? throw new InvalidOperationException("User was not found.");
+            ?? throw new NotFoundException("", "");
         var userRoles = await userManager.GetRolesAsync(applicationUser);
         authClaims.AddRange(userRoles.Select(r => new Claim("roles", r)));
         
@@ -40,6 +41,10 @@ public class TokenService(IConfiguration configuration, UserManager<ApplicationU
         
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
         var refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        var hashedRefreshToken = Convert.ToBase64String(
+            SHA256.HashData(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(refreshToken)))
+        );
+        await userManager.SetAuthenticationTokenAsync(applicationUser, loginProvider:"TaskManagement", tokenName: "RefreshToken", tokenValue: hashedRefreshToken);
         return ("Bearer", accessToken, refreshToken, token.ValidTo);
     }
 
