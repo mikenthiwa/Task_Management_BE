@@ -70,7 +70,7 @@ public static class DependencyInjection
         services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator))
         );
-        services.AddTransient<IIdentityService, IdentityService>();
         services.AddScoped<UserManager<ApplicationUser>, ApplicationUserManager>();
+        services.AddTransient<IIdentityService, IdentityService>();
     }
 }

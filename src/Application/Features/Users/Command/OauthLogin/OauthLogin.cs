@@ -19,7 +19,7 @@ public class TokenSetDto
     public required DateTime ExpiresIn { get; init; }
 }
 
-public class OauthLogin(IIdentityService identityService, IApplicationDbContext applicationDbContext, ITokenService tokenService) : IRequestHandler<OauthLoginCommand, TokenSetDto>
+public class OauthLogin(IIdentityService identityService, ITokenService tokenService) : IRequestHandler<OauthLoginCommand, TokenSetDto>
 {
     public async Task<TokenSetDto> Handle(OauthLoginCommand request, CancellationToken cancellationToken)
     {
@@ -29,8 +29,6 @@ public class OauthLogin(IIdentityService identityService, IApplicationDbContext 
         {
             var createdUser = await identityService.CreateGoogleUserAsync(googleUser);
             existingUser = createdUser;
-            applicationDbContext.DomainUsers.Add(new DomainUser(existingUser.Id, googleUser.Username, googleUser.Email));
-            await applicationDbContext.SaveChangesAsync(cancellationToken);
         }
         var (tokenType, token, refreshToken, expiresIn) = await tokenService.GenerateTokensAsync(existingUser);
         

@@ -1,6 +1,5 @@
 using Application.Common.Interfaces;
 using Application.Models;
-using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Infrastructure.Identity;
@@ -16,7 +15,7 @@ public class IdentityService(UserManager<ApplicationUser> userManager) : IIdenti
     public async Task<Result> CreateUserAsync(string username, string email, string password)
     {
         var user = new ApplicationUser() { UserName = username, Email = email, };
-        var result = await userManager.CreateAsync(user, password);
+        var result = await userManager.CreateAsync(user);
         return result.ToApplicationResult();
     }
     
@@ -24,8 +23,7 @@ public class IdentityService(UserManager<ApplicationUser> userManager) : IIdenti
     public async Task<IdentityUser> CreateGoogleUserAsync(GoogleUserDto googleUser)
     {
         var user = new ApplicationUser() { Email = googleUser.Email, UserName = googleUser.Username };
-        var result = await userManager.CreateAsync(user);
-        if(!result.Succeeded) throw new Exception("Failed to create Google user.");
+        await userManager.CreateAsync(user);
         return user;
     }
     
