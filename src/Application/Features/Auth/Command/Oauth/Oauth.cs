@@ -1,8 +1,7 @@
 using MediatR;
 using Application.Common.Interfaces;
-using Application.Features.Users.Command.Oauth;
 
-namespace Application.Features.Users.Command.Oauth;
+namespace Application.Features.Auth.Command.Oauth;
 
 public record OauthCommand : IRequest<TokenSetDto>
 {
@@ -13,21 +12,21 @@ public class Oauth(IIdentityService identityService, ITokenService tokenService)
 {
     public async Task<TokenSetDto> Handle(OauthCommand request, CancellationToken cancellationToken)
     {
-        var googleUser = new GoogleUserDto { Username = "MichaelNthiwa", Email = "mike.nthiwa@gmail.com" };
+        var googleUser = new GoogleUserDto { Username = request.Username, Email = request.Email };
         var existingUser = await identityService.GetUserByEmailAsync(googleUser.Email);
         if (existingUser == null)
         {
             var createdUser = await identityService.CreateGoogleUserAsync(googleUser);
             existingUser = createdUser;
         }
-        var (tokenType, token, refreshToken, expiresIn) = await tokenService.GenerateTokensAsync(existingUser);
+        var (tokenType, token, refreshToken, expiresInMinutes) = await tokenService.GenerateTokensAsync(existingUser);
         
         return new TokenSetDto
         {
             TokenType = tokenType,
             AccessToken = token,
             RefreshToken = refreshToken,
-            ExpiresIn = expiresIn
+            ExpiresIn = expiresInMinutes
         };
     }
 }

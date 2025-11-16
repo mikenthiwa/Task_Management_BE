@@ -19,9 +19,4 @@ public class Users : EndpointGroupBase
         var result = await sender.Send(query);
         return TypedResults.Ok(Result<List<UserDto>>.SuccessResponse(200, "User retrieved successfully", result));
     }
-
-    
-    
-        
-    
 }

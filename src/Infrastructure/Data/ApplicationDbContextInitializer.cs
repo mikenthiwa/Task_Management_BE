@@ -97,7 +97,7 @@ public class ApplicationDbContextInitializer(
             await roleManager.CreateAsync(administratorRole);
         }
         
-        var administrator = new ApplicationUser() { UserName = "administrator@localhost.com", Email = "administrator@localhost", EmailConfirmed = true};
+        var administrator = new ApplicationUser() { UserName = "administrator", Email = "administrator@localhost", EmailConfirmed = true};
         if (userManager.Users.All(u => u.UserName != administrator.UserName))
         {
             await userManager.CreateAsync(administrator);
