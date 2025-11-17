@@ -3,6 +3,7 @@ using Application.Features.Auth.Command.RefreshToken;
 using Task_Management_BE.Infrastructure;
 using Application.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
+using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 
 namespace Task_Management_BE.Endpoints;
 
@@ -10,7 +11,9 @@ public class Auth : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
-        app.MapGroup(this).MapPost("/social-login", Oauth);
+        app.MapGroup(this)
+            .AddFluentValidationAutoValidation()
+            .MapPost("/social-login", Oauth);
         app.MapGroup(this).MapPost("/refresh-token", RefreshToken);
     }
     

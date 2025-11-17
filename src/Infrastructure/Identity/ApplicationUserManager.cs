@@ -27,7 +27,7 @@ public class ApplicationUserManager(
     public override async Task<IdentityResult> CreateAsync(ApplicationUser user)
     {
         var result = await base.CreateAsync(user);
-        if (!result.Succeeded) return result;
+        if (!result.Succeeded) throw new Exception("Failed to create user in Identity store.");
         return await MirrorToDomainAsync(user, result);
     }
     
