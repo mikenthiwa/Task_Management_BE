@@ -15,9 +15,22 @@ public class IdentityService(UserManager<ApplicationUser> userManager) : IIdenti
     public async Task<Result> CreateUserAsync(string username, string email, string password)
     {
         var user = new ApplicationUser() { UserName = username, Email = email, };
-        var result = await userManager.CreateAsync(user, password);
+        var result = await userManager.CreateAsync(user);
         return result.ToApplicationResult();
     }
+    
 
+    public async Task<IdentityUser> CreateGoogleUserAsync(GoogleUserDto googleUser)
+    {
+        var user = new ApplicationUser() { Email = googleUser.Email, UserName = googleUser.Username };
+        await userManager.CreateAsync(user);
+        return user;
+    }
+    
+    public async Task<IdentityUser?> GetUserByEmailAsync(string email)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        return user;
+    }
     
 }

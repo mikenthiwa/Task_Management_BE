@@ -37,6 +37,8 @@ app.UseSwaggerUi(settings =>
 app.UseExceptionHandler(options => { });
 // app.UseHttpsRedirection();
 app.UseCors("MyAllowSpecificOrigins");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapEndpoints();
 
 app.Run();

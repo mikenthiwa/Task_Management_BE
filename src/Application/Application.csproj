@@ -23,6 +23,7 @@
     <ItemGroup>
       <Folder Include="Common\Repository\" />
       <Folder Include="Common\Security\" />
+      <Folder Include="Features\Auth\" />
     </ItemGroup>
 
 </Project>
