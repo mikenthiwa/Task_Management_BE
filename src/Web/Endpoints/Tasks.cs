@@ -17,7 +17,8 @@ public class Tasks : EndpointGroupBase
     public override void Map(WebApplication app)
     {
         app.MapGroup(this)
-            .RequireAuthorization(Policies.CanPurge)
+            // .RequireAuthorization(Policies.CanPurge)
+            .RequireAuthorization()
             .AddFluentValidationAutoValidation()
             .MapPost("/", CreateTask);
 
@@ -26,7 +27,8 @@ public class Tasks : EndpointGroupBase
             .MapGet("/", GetTasks);
 
         app.MapGroup(this)
-            .RequireAuthorization(Policies.CanPurge)
+            // .RequireAuthorization(Policies.CanPurge)
+            .RequireAuthorization()
             .MapPost("/{taskId:int}/assign", AssignTask);
     }
     

@@ -23,7 +23,6 @@ public class TokenService(IConfiguration configuration, UserManager<ApplicationU
         IdentityUser user)
     {
         // Implementation for generating tokens
-        var jwtSection = configuration.GetSection("Jwt");
         var authClaims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
@@ -35,12 +34,12 @@ public class TokenService(IConfiguration configuration, UserManager<ApplicationU
             ?? throw new NotFoundException(nameof(ApplicationUser), user.Id);
         var userRoles = await userManager.GetRolesAsync(applicationUser);
         authClaims.AddRange(userRoles.Select(r => new Claim("roles", r)));
-        var jwtKey = jwtSection["Key"] ?? configuration["Jwt:Key"];
+        var jwtKey = configuration["Jwt:Key"];
         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Guard.Against.NullOrWhiteSpace(jwtKey)));
-        var expiresInMinutes = Convert.ToDouble(jwtSection["AccessTokenExpiryMinutes"] ?? configuration["Jwt:AccessTokenExpiryMinutes"]);
+        var expiresInMinutes = Convert.ToDouble(configuration["Jwt:AccessTokenExpiryMinutes"]);
         var token = new JwtSecurityToken(
-            issuer: jwtSection["Issuer"] ?? configuration["Jwt:Issuer"],
-            audience: jwtSection["Audience"] ?? configuration["Jwt:Audience"],
+            issuer: configuration["Jwt:Issuer"],
+            audience: configuration["Jwt:Audience"],
             expires: DateTime.UtcNow.AddMinutes(expiresInMinutes),
             claims: authClaims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
@@ -50,7 +49,6 @@ public class TokenService(IConfiguration configuration, UserManager<ApplicationU
         var refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         var hashedRefreshToken = HashRefreshToken(refreshToken);
         await userManager.SetAuthenticationTokenAsync(applicationUser, loginProvider: RefreshTokenProvider, tokenName: RefreshTokenName, tokenValue: hashedRefreshToken);
-        // await userManager.SetAuthenticationTokenAsync(applicationUser, loginProvider: RefreshTokenProvider, tokenName: RefreshTokenName, tokenValue: refreshToken);
         
         return ("Bearer", accessToken, refreshToken, expiresInMinutes);
     }
@@ -81,15 +79,14 @@ public class TokenService(IConfiguration configuration, UserManager<ApplicationU
 
     public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
     {
-        var jwtSection = configuration.GetSection("Jwt");
-        var jwtKey = jwtSection["Key"] ?? configuration["Jwt:Key"];
+        var jwtKey = configuration["Jwt:Key"];
         var tokenValidationParameters = new TokenValidationParameters
         {
             ValidateAudience = true,
             ValidateIssuer = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSection["Issuer"] ?? configuration["Jwt:Issuer"],
-            ValidAudience = jwtSection["Audience"] ?? configuration["Jwt:Audience"],
+            ValidIssuer = configuration["Jwt:Issuer"],
+            ValidAudience = configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(Guard.Against.NullOrWhiteSpace(jwtKey))),
             ValidateLifetime = false
         };
