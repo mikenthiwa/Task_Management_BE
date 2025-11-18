@@ -23,25 +23,25 @@ public class ApplicationUserManager(
     )  
     : UserManager<ApplicationUser>(store, optionsAccessor, passwordHasher, userValidators, passwordValidators, keyNormalizer, errors, services, logger)
 {
-    private readonly ApplicationDbContext _db = dbContext;
 
-    public override async Task<IdentityResult> CreateAsync(ApplicationUser user, string password)
+    public override async Task<IdentityResult> CreateAsync(ApplicationUser user)
     {
-        var result = await base.CreateAsync(user, password);
-        if (!result.Succeeded) return result;
+        var result = await base.CreateAsync(user);
+        if (!result.Succeeded) throw new Exception("Failed to create user in Identity store.");
         return await MirrorToDomainAsync(user, result);
     }
+    
 
     private async Task<IdentityResult> MirrorToDomainAsync(ApplicationUser user, IdentityResult result)
     {
         if (string.IsNullOrEmpty(user.Id) || string.IsNullOrEmpty(user.UserName) || string.IsNullOrEmpty(user.Email)) return result;
 
-        var exist = await _db.DomainUsers.AnyAsync(u => u.Id == user.Id);
+        var exist = await dbContext.DomainUsers.AnyAsync(u => u.Id == user.Id);
         if(exist) return result;
-        _db.DomainUsers.Add(new DomainUser(user.Id, user.UserName, user.Email));
+        dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, user.Email));
         try
         {
-            await _db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
             return result;
         }
         catch (Exception ex)

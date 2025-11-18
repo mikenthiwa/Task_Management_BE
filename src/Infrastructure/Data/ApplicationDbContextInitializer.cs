@@ -97,10 +97,10 @@ public class ApplicationDbContextInitializer(
             await roleManager.CreateAsync(administratorRole);
         }
         
-        var administrator = new ApplicationUser() { UserName = "administrator@localhost.com", Email = "administrator@localhost", EmailConfirmed = true};
+        var administrator = new ApplicationUser() { UserName = "administrator", Email = "administrator@localhost", EmailConfirmed = true};
         if (userManager.Users.All(u => u.UserName != administrator.UserName))
         {
-            await userManager.CreateAsync(administrator, adminPassword);
+            await userManager.CreateAsync(administrator);
             if (!string.IsNullOrWhiteSpace(administratorRole.Name))
             {
                 await userManager.AddToRolesAsync(administrator, new [] { administratorRole.Name });
@@ -122,7 +122,7 @@ public class ApplicationDbContextInitializer(
         var user = new ApplicationUser() { UserName = "user", Email = "user@localhost" };
         if (userManager.Users.All(u => u.UserName != user.UserName))
         {
-            await userManager.CreateAsync(user, "User1!");
+            await userManager.CreateAsync(user);
             if (!string.IsNullOrWhiteSpace(userRole.Name))
             {
                 await userManager.AddToRolesAsync(user, new [] { userRole.Name });
