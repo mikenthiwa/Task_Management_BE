@@ -10,10 +10,11 @@ public class Users : EndpointGroupBase
     public override void Map(WebApplication app)
     {
         app.MapGroup(this)
-            .MapGet("/users", GetUsers);
+            .RequireAuthorization()
+            .MapGet(GetUsers);
     }
 
-    public async Task<Results<Ok<Result<List<UserDto>>>, BadRequest>> GetUsers(ISender sender)
+    private async Task<Results<Ok<Result<List<UserDto>>>, BadRequest>> GetUsers(ISender sender)
     {
         var query = new GetUsersQuery();
         var result = await sender.Send(query);
