@@ -17,19 +17,11 @@ public class Tasks : EndpointGroupBase
     public override void Map(WebApplication app)
     {
         app.MapGroup(this)
-            // .RequireAuthorization(Policies.CanPurge)
             .RequireAuthorization()
             .AddFluentValidationAutoValidation()
-            .MapPost("/", CreateTask);
-
-        app.MapGroup(this)
-            .RequireAuthorization()
-            .MapGet("/", GetTasks);
-
-        app.MapGroup(this)
-            // .RequireAuthorization(Policies.CanPurge)
-            .RequireAuthorization()
-            .MapPost("/{taskId:int}/assign", AssignTask);
+            .MapGet(GetTasks)
+            .MapPost(CreateTask)
+            .MapPost(AssignTask, "{taskId:int}/assign");
     }
     
     private async Task<Results<Ok<Result>, BadRequest>> CreateTask(ISender sender, CreateTaskCommand command)

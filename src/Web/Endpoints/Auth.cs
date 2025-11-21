@@ -11,10 +11,15 @@ public class Auth : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
+        // app.MapGroup(this)
+        //     .AddFluentValidationAutoValidation()
+        //     .MapPost(Oauth, "/social-login")
+        //     .MapPost(RefreshToken, "/refresh-token");
+        
         app.MapGroup(this)
             .AddFluentValidationAutoValidation()
-            .MapPost("/social-login", Oauth);
-        app.MapGroup(this).MapPost("/refresh-token", RefreshToken);
+            .MapPost(Oauth, "/social-login")
+            .MapPost(RefreshToken, "/refresh-token");
     }
     
     private async Task<Results<Ok<Result<TokenSetDto>>, BadRequest>> Oauth(ISender sender, OauthCommand command)
