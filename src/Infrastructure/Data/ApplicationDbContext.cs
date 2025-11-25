@@ -5,6 +5,7 @@ using Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Task = Domain.Entities.Task;
+using Notification = Domain.Entities.Notification;
 
 namespace Infrastructure.Data;
 
@@ -12,6 +13,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Task> Tasks => Set<Task>();
     public DbSet<DomainUser> DomainUsers => Set<DomainUser>();
+    public DbSet<Notification> Notifications => Set<Notification>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
