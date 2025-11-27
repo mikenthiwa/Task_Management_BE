@@ -11,7 +11,7 @@ public record GetNotificationWithPaginationQuery : IRequest<PaginatedList<Notifi
 {
     public int PageNumber { get; init; } = 1;
     public int PageSize { get; init; } = 10;
-    public string? UserId { get; init; }
+    [FromRoute]public string? UserId { get; init; }
 }
 
 public class GetNotificationWithPagination(INotificationService notificationService, IMapper mapper) : IRequestHandler<GetNotificationWithPaginationQuery, PaginatedList<NotificationDto>>

@@ -14,12 +14,12 @@ public class Notifications : EndpointGroupBase
         // Define notification-related endpoints here
         app.MapGroup(this)
             .RequireAuthorization()
-            .MapGet(GetUserNotifications);
+            .MapGet(GetUserNotifications, "/user/{userId}");
 
     }
     
     public async Task<Results<Ok<Result<PaginatedList<NotificationDto>>>, BadRequest>> GetUserNotifications(
-        [FromQuery] string userId,
+        [FromRoute] string userId,
         ISender sender, 
         [FromQuery(Name = "pageNumber")] int? pageNumber,
         [FromQuery(Name = "pageSize")] int? pageSize

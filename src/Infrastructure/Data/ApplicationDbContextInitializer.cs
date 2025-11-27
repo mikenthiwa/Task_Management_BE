@@ -120,7 +120,7 @@ public class ApplicationDbContextInitializer(
             await roleManager.CreateAsync(userRole);
         }
         
-        var user = new ApplicationUser() { UserName = "user", Email = "user@localhost" };
+        var user = new ApplicationUser() { UserName = "michaelnthiwa", Email = "mikenthiwa@gmail.com" };
         if (userManager.Users.All(u => u.UserName != user.UserName))
         {
             await userManager.CreateAsync(user);

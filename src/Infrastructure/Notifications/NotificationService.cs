@@ -1,7 +1,6 @@
 using Application.Common.Interfaces;
 using Domain.Entities;
 using Domain.Enum;
-using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Notifications;
 
@@ -20,5 +19,4 @@ public class NotificationService(IApplicationDbContext applicationDbContext): IN
         return applicationDbContext.Notifications
             .Where(n => n.UserId == userId && !n.IsDeleted);
     }
-    
 }
