@@ -1,5 +1,6 @@
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enum;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -119,7 +120,7 @@ public class ApplicationDbContextInitializer(
             await roleManager.CreateAsync(userRole);
         }
         
-        var user = new ApplicationUser() { UserName = "user", Email = "user@localhost" };
+        var user = new ApplicationUser() { UserName = "michaelnthiwa", Email = "mikenthiwa@gmail.com" };
         if (userManager.Users.All(u => u.UserName != user.UserName))
         {
             await userManager.CreateAsync(user);
@@ -134,25 +135,41 @@ public class ApplicationDbContextInitializer(
             }
         }
         
+        var seededTasks = new List<TaskItem>();
         
         // Seed, Tasks
         if (!dbContext.Tasks.Any())
         {
             for (int i = 1; i <= 15; i++)
             {
-                dbContext.Tasks.Add(
-                    new TaskItem
-                    {
-                        Title = $"Task {i}",
-                        Description = $"This is task number {i}.",
-                        Status = 0,
-                        Priority = 0,
-                        CreatorId = administrator.Id,
-                        AssigneeId = user.Id
-                    }
-                );
+                var task = new TaskItem
+                {
+                    Title = $"Task {i}",
+                    Description = $"This is task number {i}.",
+                    Status = 0,
+                    Priority = 0,
+                    CreatorId = administrator.Id,
+                    AssigneeId = user.Id
+                };
+                
+                seededTasks.Add(task);
+                dbContext.Tasks.Add(task);
             }
         }
+
+        if (seededTasks.Count > 0 && !dbContext.Notifications.Any())
+        {
+            var notifications = seededTasks
+                .Where(task => !string.IsNullOrWhiteSpace(task.AssigneeId))
+                .Select(task =>
+                    new Notification(
+                        task.AssigneeId!,
+                        NotificationType.TaskCreated,
+                        $"Task '{task.Title}' has been created and assigned to you."));
+
+            dbContext.Notifications.AddRange(notifications);
+        }
+        
         await dbContext.SaveChangesAsync();
     }
     

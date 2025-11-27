@@ -3,6 +3,7 @@ using Domain.Constants;
 using Infrastructure.Data;
 using Infrastructure.Data.Interceptors;
 using Infrastructure.Identity;
+using Infrastructure.Notifications;
 using Infrastructure.Security;
 using Infrastructure.Token; 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -67,6 +68,7 @@ public static class DependencyInjection
             .AddApiEndpoints();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, AppUser>();
+        services.AddScoped<INotificationService, NotificationService>();
         services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator))
         );

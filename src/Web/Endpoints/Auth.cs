@@ -11,11 +11,7 @@ public class Auth : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
-        // app.MapGroup(this)
-        //     .AddFluentValidationAutoValidation()
-        //     .MapPost(Oauth, "/social-login")
-        //     .MapPost(RefreshToken, "/refresh-token");
-        
+
         app.MapGroup(this)
             .AddFluentValidationAutoValidation()
             .MapPost(Oauth, "/social-login")

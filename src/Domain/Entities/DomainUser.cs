@@ -8,5 +8,6 @@ public class DomainUser(string id, string username, string email)
     public List<Task>? AssignedTasks { get; } = [];
     
     public List<Task>? CreatedTasks { get; } = [];
+    public List<Notification>? Notifications { get; } = [];
     
 }
