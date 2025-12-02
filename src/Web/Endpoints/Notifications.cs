@@ -1,8 +1,10 @@
 using Application.Common.Models;
+using Application.Features.Notifications.command.MarkAllAsRead;
 using Application.Features.Notifications.Queries;
 using Application.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Task_Management_BE.Infrastructure;
 
 namespace Task_Management_BE.Endpoints;
@@ -14,7 +16,9 @@ public class Notifications : EndpointGroupBase
         // Define notification-related endpoints here
         app.MapGroup(this)
             .RequireAuthorization()
-            .MapGet(GetUserNotifications, "/user/{userId}");
+            .AddFluentValidationAutoValidation()
+            .MapGet(GetUserNotifications, "/user/{userId}")
+            .MapPost(MarkAllNotificationAsRead, "/mark-all-as-read");
 
     }
     
@@ -25,12 +29,18 @@ public class Notifications : EndpointGroupBase
         [FromQuery(Name = "pageSize")] int? pageSize
         )
     {
-        // Implementation for fetching user notifications
         var query = new GetNotificationWithPaginationQuery()
         {
             UserId = userId, PageNumber = pageNumber ?? 1, PageSize = pageSize ?? 10
         };
         var result = await sender.Send(query);
         return TypedResults.Ok(Result<PaginatedList<NotificationDto>>.SuccessResponse(200, "Notifications retrieved successfully", result));
+    }
+    
+    public async Task<Results<Ok<Result>, BadRequest>> MarkAllNotificationAsRead(ISender sender,
+        MarkAllNotificationAsReadCommand command)
+    {
+        await sender.Send(command);
+        return TypedResults.Ok(Result.SuccessResponse(200, "All notifications marked as read"));
     }
 }
