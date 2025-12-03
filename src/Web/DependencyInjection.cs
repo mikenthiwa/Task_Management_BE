@@ -41,8 +41,10 @@ public static class DependencyInjection
                 var origins = allowedOrigins.Length > 0 ? allowedOrigins : ["http://localhost:3000"];
                 builder.WithOrigins(origins)
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
+            
         });
     }
 }

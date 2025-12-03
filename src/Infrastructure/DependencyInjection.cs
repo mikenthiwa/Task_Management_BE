@@ -74,5 +74,6 @@ public static class DependencyInjection
         );
         services.AddScoped<UserManager<ApplicationUser>, ApplicationUserManager>();
         services.AddTransient<IIdentityService, IdentityService>();
+        services.AddSignalR();
     }
 }
