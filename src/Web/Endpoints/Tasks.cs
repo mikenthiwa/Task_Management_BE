@@ -2,8 +2,8 @@ using Application.Common.Models;
 using Application.Features.Tasks.Command.AssignTask;
 using Application.Features.Tasks.Command.CreateTask;
 using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+using Application.Features.Tasks.Queries.GetTasksWithPagination;
 using Application.Models;
-using Domain.Constants;
 using Domain.Enum;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +38,7 @@ public class Tasks : EndpointGroupBase
         [FromQuery(Name = "PageSize")] int? pageSize
         )
     {
-        var query = new GetTaskWithQuery { Status = status, AssigneeId = assignedId, PageNumber = pageNumber ?? 1, PageSize = pageSize ?? 10 };
+        var query = new GetTaskWithQuery() { Status = status, AssigneeId = assignedId, PageNumber = pageNumber ?? 1, PageSize = pageSize ?? 10 };
         var result = await sender.Send(query);
         return TypedResults.Ok(Result<PaginatedList<TaskDto>>.SuccessResponse(200, "Tasks retrieved successfully", result));
     }

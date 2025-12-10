@@ -1,6 +1,7 @@
 using Application.Common.Interfaces;
 using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
 using Ardalis.GuardClauses;
+using Domain.Enum;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +12,7 @@ public record AssignTaskCommand : IRequest<TaskDto>
     [FromRoute] public int TaskId { get; set; }
     public required string AssignedId { get; init; }
 }
-public class AssignTaskCommandHandler(IApplicationDbContext applicationDb, IMapper mapper) : IRequestHandler<AssignTaskCommand, TaskDto>
+public class AssignTaskCommandHandler(IApplicationDbContext applicationDb, IMapper mapper, INotificationService notificationService) : IRequestHandler<AssignTaskCommand, TaskDto>
 {
     public async Task<TaskDto> Handle(AssignTaskCommand request, CancellationToken cancellationToken)
     {
@@ -20,6 +21,7 @@ public class AssignTaskCommandHandler(IApplicationDbContext applicationDb, IMapp
         
         entity.AssigneeId = request.AssignedId;
         await applicationDb.SaveChangesAsync(cancellationToken);
+        await notificationService.CreateNotificationAsync(request.AssignedId, $"You have been assigned to task '{entity.Title}'.", NotificationType.TaskAssigned);
         return mapper.Map<TaskDto>(entity);
     }
     

@@ -1,6 +1,6 @@
 using Task = Domain.Entities.Task;
 
-namespace Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+namespace Application.Features.Tasks.Queries.GetTasksWithPagination;
 
 public static class TaskQueryExtension
 {
