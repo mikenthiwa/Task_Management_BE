@@ -8,10 +8,11 @@ public record MarkAllNotificationAsReadCommand : IRequest
     public required string UserId { get; init; }
 }
 
-public class MarkAllNotificationAsRead(INotificationService notificationService) : IRequestHandler<MarkAllNotificationAsReadCommand>
+public class MarkAllNotificationAsRead(INotificationService notificationService, ICurrentUserService currentUserService) : IRequestHandler<MarkAllNotificationAsReadCommand>
 {
     public async Task Handle(MarkAllNotificationAsReadCommand request, CancellationToken cancellationToken)
     {
-        await notificationService.MarkAllNotificationsAsReadAsync(request.UserId);
+        var userId = currentUserService.UserId;
+        await notificationService.MarkAllNotificationsAsReadAsync(userId!);
     }
 }
