@@ -28,7 +28,6 @@ public class CreateTask(IApplicationDbContext applicationDbContext, ICurrentUser
         await applicationDbContext.SaveChangesAsync(cancellationToken);
         var message = $"Task '{entity.Title}' has been created.";
         await notificationService.CreateNotificationAsync(currentUserService.UserId!, message, NotificationType.TaskCreated);
-
         return entity.Id;
     }
 }

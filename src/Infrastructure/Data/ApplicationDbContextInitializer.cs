@@ -157,18 +157,18 @@ public class ApplicationDbContextInitializer(
             }
         }
 
-        if (seededTasks.Count > 0 && !dbContext.Notifications.Any())
-        {
-            var notifications = seededTasks
-                .Where(task => !string.IsNullOrWhiteSpace(task.AssigneeId))
-                .Select(task =>
-                    new Notification(
-                        task.AssigneeId!,
-                        NotificationType.TaskCreated,
-                        $"Task '{task.Title}' has been created and assigned to you."));
-
-            dbContext.Notifications.AddRange(notifications);
-        }
+        // if (seededTasks.Count > 0 && !dbContext.Notifications.Any())
+        // {
+        //     var notifications = seededTasks
+        //         .Where(task => !string.IsNullOrWhiteSpace(task.AssigneeId))
+        //         .Select(task =>
+        //             new Notification(
+        //                 task.AssigneeId!,
+        //                 NotificationType.TaskCreated,
+        //                 $"Task '{task.Title}' has been created and assigned to you."));
+        //
+        //     dbContext.Notifications.AddRange(notifications);
+        // }
         
         await dbContext.SaveChangesAsync();
     }

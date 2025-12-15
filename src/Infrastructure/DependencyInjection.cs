@@ -2,6 +2,7 @@ using Application.Common.Interfaces;
 using Domain.Constants;
 using Infrastructure.Data;
 using Infrastructure.Data.Interceptors;
+using Infrastructure.Hubs;
 using Infrastructure.Identity;
 using Infrastructure.Notifications;
 using Infrastructure.Security;
@@ -59,6 +60,21 @@ public static class DependencyInjection
                         new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
                     ClockSkew = TimeSpan.Zero
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &
+                            (path.StartsWithSegments("/notificationHub")))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             }
         );
         services.AddScoped<ITokenService, TokenService>();
@@ -74,5 +90,7 @@ public static class DependencyInjection
         );
         services.AddScoped<UserManager<ApplicationUser>, ApplicationUserManager>();
         services.AddTransient<IIdentityService, IdentityService>();
+        services.AddSignalR();
+        services.AddScoped<INotificationPublisherService, NotificationHubServices>();
     }
 }

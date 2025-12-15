@@ -1,6 +1,6 @@
 using Infrastructure.Data;
+using Infrastructure.Hubs;
 using Task_Management_BE.Infrastructure;
-using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,5 +40,7 @@ app.UseCors("MyAllowSpecificOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapEndpoints();
+app.MapHub<NotificationHub>("/notificationHub");
+
 
 app.Run();
