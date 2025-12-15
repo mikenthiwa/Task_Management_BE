@@ -1,5 +1,6 @@
 using Application.Common.Interfaces;
 using Application.Features.Notifications.Queries;
+using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.AspNetCore.SignalR;
@@ -20,5 +21,9 @@ public class NotificationHubServices(IHubContext<NotificationHub> hubContext, IM
         var notificationDto = mapper.Map<NotificationDto>(notification);
         await hubContext.Clients.Group($"user-{userId}").SendAsync("ReceiveNotification", notificationDto);
     }
-    
+
+    public async Task NotifyTaskUpdatedAsync(TaskDto taskDto)
+    {
+        await hubContext.Clients.All.SendAsync("TaskUpdated", taskDto);
+    }
 }
