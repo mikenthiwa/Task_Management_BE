@@ -1,5 +1,6 @@
 using Application.Common.Interfaces;
 using Domain.Enum;
+using Domain.Events;
 using MediatR;
 using Task = Domain.Entities.Task;
 
@@ -10,7 +11,7 @@ public record CreateTaskCommand : IRequest<int>
     public required string Title { get; init; }
     public string? Description { get; init; }
 }
-public class CreateTask(IApplicationDbContext applicationDbContext, ICurrentUserService currentUserService, INotificationService notificationService) : IRequestHandler<CreateTaskCommand, int>
+public class CreateTask(IApplicationDbContext applicationDbContext, ICurrentUserService currentUserService) : IRequestHandler<CreateTaskCommand, int>
 {
     public async Task<int> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
     {
@@ -22,13 +23,10 @@ public class CreateTask(IApplicationDbContext applicationDbContext, ICurrentUser
             Priority = 0,
             CreatorId = currentUserService.UserId
         };
-
+        entity.AddDomainEvent(new TaskCreatedEvent(entity));
         applicationDbContext.Tasks.Add(entity);
 
         await applicationDbContext.SaveChangesAsync(cancellationToken);
-        var message = $"Task '{entity.Title}' has been created.";
-        await notificationService.CreateNotificationAsync(currentUserService.UserId!, message, NotificationType.TaskCreated);
-
         return entity.Id;
     }
 }

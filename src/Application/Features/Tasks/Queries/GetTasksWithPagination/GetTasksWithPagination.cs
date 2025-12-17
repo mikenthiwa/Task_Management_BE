@@ -1,11 +1,12 @@
 using Application.Common.Interfaces;
 using Application.Common.Mappings;
 using Application.Common.Models;
+using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
 using AutoMapper.QueryableExtensions;
 using Domain.Enum;
 using MediatR;
 
-namespace Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+namespace Application.Features.Tasks.Queries.GetTasksWithPagination;
 
 public record GetTaskWithQuery : IRequest<PaginatedList<TaskDto>>
 {
@@ -20,8 +21,9 @@ public class GetTasksWithPaginationHandler(IApplicationDbContext context, IMappe
     public async Task<PaginatedList<TaskDto>> Handle(GetTaskWithQuery request, CancellationToken cancellationToken)
     {
         return await context.Tasks
+            // .AsNoTracking()
             .TaskQuery(request)
-            .OrderBy(t => t.Id)
+            .OrderByDescending(t => t.Id)
             .ProjectTo<TaskDto>(mapper.ConfigurationProvider)
             .PaginatedListAsync(request.PageNumber, request.PageSize);
     }

@@ -4,13 +4,16 @@ using Domain.Enum;
 
 namespace Infrastructure.Notifications;
 
-public class NotificationService(IApplicationDbContext applicationDbContext): INotificationService
+public class NotificationService(IApplicationDbContext applicationDbContext, 
+    INotificationPublisherService notificationPublisherService
+    ): INotificationService
 {
     public async Task<Guid> CreateNotificationAsync(string userId, string message, NotificationType type)
     {
         var notification = new Notification(userId, type, message);
         applicationDbContext.Notifications.Add(notification);
         await applicationDbContext.SaveChangesAsync(CancellationToken.None);
+        await notificationPublisherService.PublishToUserAsync(userId, notification);
         return notification.Id;
     }
     
