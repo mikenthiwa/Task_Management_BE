@@ -43,14 +43,14 @@ public class Tasks : EndpointGroupBase
         return TypedResults.Ok(Result<PaginatedList<TaskDto>>.SuccessResponse(200, "Tasks retrieved successfully", result));
     }
 
-    private async Task<Results<Ok<Result<TaskDto>>, BadRequest>> AssignTask(
+    private async Task<Results<Ok<Result>, BadRequest>> AssignTask(
         [FromRoute] int taskId,
         ISender sender,
         [FromBody] AssignTaskCommand command
     )
     {
         command.TaskId = taskId;
-        var result = await sender.Send(command);
-        return TypedResults.Ok(Result<TaskDto>.SuccessResponse(200, "Task assigned successfully", result));
+        await sender.Send(command);
+        return TypedResults.Ok(Result.SuccessResponse(200, "Task assigned successfully"));
     }
 }

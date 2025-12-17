@@ -21,6 +21,7 @@ public class GetTasksWithPaginationHandler(IApplicationDbContext context, IMappe
     public async Task<PaginatedList<TaskDto>> Handle(GetTaskWithQuery request, CancellationToken cancellationToken)
     {
         return await context.Tasks
+            // .AsNoTracking()
             .TaskQuery(request)
             .OrderByDescending(t => t.Id)
             .ProjectTo<TaskDto>(mapper.ConfigurationProvider)
