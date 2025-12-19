@@ -2,6 +2,7 @@ using Application.Common.Models;
 using Application.Features.Tasks.Command.AssignTask;
 using Application.Features.Tasks.Command.CreateTask;
 using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+using Application.Features.Tasks.Command.UpdateTaskStatus;
 using Application.Features.Tasks.Queries.GetTasksWithPagination;
 using Application.Models;
 using Domain.Enum;
@@ -21,7 +22,8 @@ public class Tasks : EndpointGroupBase
             .AddFluentValidationAutoValidation()
             .MapGet(GetTasks)
             .MapPost(CreateTask)
-            .MapPost(AssignTask, "{taskId:int}/assign");
+            .MapPost(AssignTask, "{taskId:int}/assign")
+            .MapPatch(UpdateTaskStatus, "{taskId:int}/status");
     }
     
     private async Task<Results<Ok<Result>, BadRequest>> CreateTask(ISender sender, CreateTaskCommand command)
@@ -52,5 +54,16 @@ public class Tasks : EndpointGroupBase
         command.TaskId = taskId;
         await sender.Send(command);
         return TypedResults.Ok(Result.SuccessResponse(200, "Task assigned successfully"));
+    }
+
+    private async Task<Results<Ok<Result>, BadRequest>> UpdateTaskStatus(
+        [FromRoute] int taskId,
+        ISender sender,
+        [FromBody] UpdateTaskStatusCommand command
+    )
+    {
+        command.TaskId = taskId;
+        await sender.Send(command);
+        return TypedResults.Ok(Result.SuccessResponse(200, "Task status updated successfully"));
     }
 }
