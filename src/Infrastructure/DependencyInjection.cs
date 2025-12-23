@@ -91,7 +91,11 @@ public static class DependencyInjection
         );
         services.AddScoped<UserManager<ApplicationUser>, ApplicationUserManager>();
         services.AddTransient<IIdentityService, IdentityService>();
-        services.AddSignalR();
+        services.AddSignalR()
+            .AddJsonProtocol(options =>
+            {
+                options.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
         services.AddScoped<INotificationPublisherService, NotificationHubServices>();
     }
 }
