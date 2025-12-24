@@ -31,6 +31,10 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Picture")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("text");
@@ -163,6 +167,11 @@ namespace Infrastructure.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Picture")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");

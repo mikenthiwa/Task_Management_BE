@@ -98,7 +98,7 @@ public class ApplicationDbContextInitializer(
             await roleManager.CreateAsync(administratorRole);
         }
         
-        var administrator = new ApplicationUser() { UserName = "administrator", Email = "administrator@localhost", EmailConfirmed = true};
+        var administrator = new ApplicationUser() { UserName = "administrator", Email = "administrator@localhost", EmailConfirmed = true, Picture = ""};
         if (userManager.Users.All(u => u.UserName != administrator.UserName))
         {
             await userManager.CreateAsync(administrator);
@@ -109,7 +109,7 @@ public class ApplicationDbContextInitializer(
 
             if (!dbContext.DomainUsers.Any(u => u.Id == administrator.Id))
             {
-                dbContext.DomainUsers.Add(new DomainUser(administrator.Id, administrator.UserName, administrator.Email));
+                dbContext.DomainUsers.Add(new DomainUser(administrator.Id, administrator.UserName, administrator.Email, ""));
             }
             
         }
@@ -120,7 +120,7 @@ public class ApplicationDbContextInitializer(
             await roleManager.CreateAsync(userRole);
         }
         
-        var user = new ApplicationUser() { UserName = "michaelnthiwa", Email = "mikenthiwa@gmail.com" };
+        var user = new ApplicationUser() { UserName = "michaelnthiwa", Email = "mikenthiwa@gmail.com", Picture = "https://lh3.googleusercontent.com/a/ACg8ocLKXbHIkdod15jKFDJKFUehYLy3vawWNowalYSl4psb5VNOF934=s96-c"};
         if (userManager.Users.All(u => u.UserName != user.UserName))
         {
             await userManager.CreateAsync(user);
@@ -131,7 +131,7 @@ public class ApplicationDbContextInitializer(
 
             if (!dbContext.DomainUsers.Any(u => u.Id == user.Id))
             {
-                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, administrator.Email));
+                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, administrator.Email, "https://lh3.googleusercontent.com/a/ACg8ocLKXbHIkdod15jKFDJKFUehYLy3vawWNowalYSl4psb5VNOF934=s96-c"));
             }
         }
         
