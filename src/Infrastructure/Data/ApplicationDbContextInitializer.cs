@@ -100,9 +100,7 @@ public class ApplicationDbContextInitializer(
             }
         }
         
-        var seededTasks = new List<TaskItem>();
         
-        // Seed, Tasks
         if (!dbContext.Tasks.Any())
         {
             for (int i = 1; i <= 15; i++)
@@ -116,8 +114,6 @@ public class ApplicationDbContextInitializer(
                     CreatorId = user.Id,
                     AssigneeId = user.Id
                 };
-                
-                seededTasks.Add(task);
                 dbContext.Tasks.Add(task);
             }
         }
