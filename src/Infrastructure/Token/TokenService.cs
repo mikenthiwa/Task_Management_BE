@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Application.Common.Interfaces;
 using Ardalis.GuardClauses;
+using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -19,18 +20,18 @@ public class TokenService(IConfiguration configuration, UserManager<ApplicationU
     private const string RefreshTokenProvider = "TaskManagement";
     private const string RefreshTokenName = "RefreshToken";
     
-    public async Task<(string tokenType, string token, string refreshToken, double expiresInMinutes)> GenerateTokensAsync(
-        IdentityUser user)
+    public async Task<(string tokenType, string token, string refreshToken, double expiresInMinutes)> GenerateTokensAsync(DomainUser user)
     {
         // Implementation for generating tokens
         var authClaims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Picture, user.Picture ?? string.Empty),
         };
 
-        var applicationUser = user as ApplicationUser ?? await userManager.FindByIdAsync(user.Id)
+        var applicationUser = await userManager.FindByIdAsync(user.Id)
             ?? throw new NotFoundException(nameof(ApplicationUser), user.Id);
         var userRoles = await userManager.GetRolesAsync(applicationUser);
         authClaims.AddRange(userRoles.Select(r => new Claim("roles", r)));
@@ -71,8 +72,10 @@ public class TokenService(IConfiguration configuration, UserManager<ApplicationU
             throw new UnauthorizedAccessException("Invalid refresh token.");
         }
 
-        var user = await userManager.FindByIdAsync(storedToken.UserId)
-                   ?? throw new UnauthorizedAccessException("Invalid refresh token.");
+        // var user = await userManager.FindByIdAsync(storedToken.UserId)
+        //            ?? throw new UnauthorizedAccessException("Invalid refresh token.");
+        
+        var user = await dbContext.DomainUsers.FindAsync(storedToken.UserId) ?? throw new UnauthorizedAccessException("Invalid refresh token.");;
 
         return await GenerateTokensAsync(user);
     }

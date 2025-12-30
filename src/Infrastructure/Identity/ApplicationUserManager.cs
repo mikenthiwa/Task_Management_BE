@@ -38,7 +38,7 @@ public class ApplicationUserManager(
 
         var exist = await dbContext.DomainUsers.AnyAsync(u => u.Id == user.Id);
         if(exist) return result;
-        dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, user.Email));
+        dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, user.Email, user.Picture));
         try
         {
             await dbContext.SaveChangesAsync();
