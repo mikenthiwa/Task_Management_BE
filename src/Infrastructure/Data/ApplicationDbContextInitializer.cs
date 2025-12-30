@@ -1,6 +1,5 @@
 using Domain.Constants;
 using Domain.Entities;
-using Domain.Enum;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -33,8 +32,8 @@ public class ApplicationDbContextInitializer(
     ILogger<ApplicationDbContextInitializer> logger,
     ApplicationDbContext dbContext,
     UserManager<ApplicationUser> userManager,
-    RoleManager<IdentityRole> roleManager,
-    IConfiguration configuration)
+    RoleManager<IdentityRole> roleManager
+    )
 {
     
     public async Task InitializeAsync(bool isDevelopment)
@@ -80,40 +79,6 @@ public class ApplicationDbContextInitializer(
 
     private async Task TrySeedAsync(bool isDevelopment)
     {
-        var adminPassword = configuration["SeedData:Admin:Password"];
-        if (string.IsNullOrWhiteSpace(adminPassword))
-        {
-            if (!isDevelopment)
-            {
-                logger.LogWarning("SeedData:Admin:Password is not configured. Skipping default admin creation.");
-                return;
-            }
-
-            adminPassword = "Kenya2019%";
-        }
-        
-        var administratorRole = new IdentityRole(Roles.Administrator);
-        if (roleManager.Roles.All(r => r.Name != administratorRole.Name))
-        {
-            await roleManager.CreateAsync(administratorRole);
-        }
-        
-        var administrator = new ApplicationUser() { UserName = "administrator", Email = "administrator@localhost", EmailConfirmed = true, Picture = ""};
-        if (userManager.Users.All(u => u.UserName != administrator.UserName))
-        {
-            await userManager.CreateAsync(administrator);
-            if (!string.IsNullOrWhiteSpace(administratorRole.Name))
-            {
-                await userManager.AddToRolesAsync(administrator, new [] { administratorRole.Name });
-            }
-
-            if (!dbContext.DomainUsers.Any(u => u.Id == administrator.Id))
-            {
-                dbContext.DomainUsers.Add(new DomainUser(administrator.Id, administrator.UserName, administrator.Email, ""));
-            }
-            
-        }
-        
         var userRole = new IdentityRole(Roles.User);
         if (roleManager.Roles.All(r => r.Name != userRole.Name))
         {
@@ -131,7 +96,7 @@ public class ApplicationDbContextInitializer(
 
             if (!dbContext.DomainUsers.Any(u => u.Id == user.Id))
             {
-                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, administrator.Email, "https://lh3.googleusercontent.com/a/ACg8ocJX24gftNNPXzvDtWVUN-DTI3aImb7CkOsSHuQiwtWKnnhPlx5rew=s96-c"));
+                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, user.Email, "https://lh3.googleusercontent.com/a/ACg8ocJX24gftNNPXzvDtWVUN-DTI3aImb7CkOsSHuQiwtWKnnhPlx5rew=s96-c"));
             }
         }
         
@@ -148,7 +113,7 @@ public class ApplicationDbContextInitializer(
                     Description = $"This is task number {i}.",
                     Status = 0,
                     Priority = 0,
-                    CreatorId = administrator.Id,
+                    CreatorId = user.Id,
                     AssigneeId = user.Id
                 };
                 
@@ -156,19 +121,6 @@ public class ApplicationDbContextInitializer(
                 dbContext.Tasks.Add(task);
             }
         }
-
-        // if (seededTasks.Count > 0 && !dbContext.Notifications.Any())
-        // {
-        //     var notifications = seededTasks
-        //         .Where(task => !string.IsNullOrWhiteSpace(task.AssigneeId))
-        //         .Select(task =>
-        //             new Notification(
-        //                 task.AssigneeId!,
-        //                 NotificationType.TaskCreated,
-        //                 $"Task '{task.Title}' has been created and assigned to you."));
-        //
-        //     dbContext.Notifications.AddRange(notifications);
-        // }
         
         await dbContext.SaveChangesAsync();
     }
