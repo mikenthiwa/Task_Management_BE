@@ -120,7 +120,7 @@ public class ApplicationDbContextInitializer(
             await roleManager.CreateAsync(userRole);
         }
         
-        var user = new ApplicationUser() { UserName = "michaelnthiwa", Email = "mikenthiwa@gmail.com", Picture = "https://lh3.googleusercontent.com/a/ACg8ocLKXbHIkdod15jKFDJKFUehYLy3vawWNowalYSl4psb5VNOF934=s96-c"};
+        var user = new ApplicationUser() { UserName = "michaelnthiwa", Email = "mikenthiwa@gmail.com", Picture = "https://lh3.googleusercontent.com/a/ACg8ocJX24gftNNPXzvDtWVUN-DTI3aImb7CkOsSHuQiwtWKnnhPlx5rew=s96-c"};
         if (userManager.Users.All(u => u.UserName != user.UserName))
         {
             await userManager.CreateAsync(user);
@@ -131,7 +131,7 @@ public class ApplicationDbContextInitializer(
 
             if (!dbContext.DomainUsers.Any(u => u.Id == user.Id))
             {
-                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, administrator.Email, "https://lh3.googleusercontent.com/a/ACg8ocLKXbHIkdod15jKFDJKFUehYLy3vawWNowalYSl4psb5VNOF934=s96-c"));
+                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, administrator.Email, "https://lh3.googleusercontent.com/a/ACg8ocJX24gftNNPXzvDtWVUN-DTI3aImb7CkOsSHuQiwtWKnnhPlx5rew=s96-c"));
             }
         }
         
