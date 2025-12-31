@@ -17,10 +17,6 @@ public class ReportService(IApplicationDbContext applicationDbContext, IMapper m
             .AsNoTracking()
             .ProjectTo<TaskDto>(mapper.ConfigurationProvider)
             .ToListAsync();
-        foreach (var item in data)
-        {
-            Console.WriteLine($"$item: {item.Description}");
-        }
         return GeneratePdf(data);
     } 
 

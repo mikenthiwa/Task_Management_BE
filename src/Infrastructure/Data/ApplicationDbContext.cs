@@ -14,6 +14,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Task> Tasks => Set<Task>();
     public DbSet<DomainUser> DomainUsers => Set<DomainUser>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<ReportJob> ReportJobs => Set<ReportJob>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {

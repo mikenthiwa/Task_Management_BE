@@ -1,4 +1,7 @@
+using Application.Common.Interfaces;
 using Application.Features.Reports.command.TasksReport;
+using Application.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Task_Management_BE.Infrastructure;
 
 namespace Task_Management_BE.Endpoints;
@@ -13,10 +16,10 @@ public class Report : EndpointGroupBase
         
     }
 
-    public async Task<IResult> GenerateTaskReport(ISender sender, TasksReportCommand command)
+    public async Task<IResult> GenerateTaskReport(ISender sender, TasksReportCommand command, ICurrentUserService currentUserService)
     {
-        var file = await sender.Send(command);
-        var fileName = $"$tasks-report-{DateTime.UtcNow:MM/dd/yyyy}.pdf";
-        return Results.File(file, "application/pdf", fileName);
+        command.UserId = currentUserService.UserId!;
+        var id = await sender.Send(command);
+        return TypedResults.Ok(Result<Guid>.SuccessResponse(200, "Generating report", id));
     }
 }
