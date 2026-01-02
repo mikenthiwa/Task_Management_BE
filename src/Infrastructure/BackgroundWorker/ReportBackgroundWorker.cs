@@ -1,5 +1,8 @@
 using Application.Common.Interfaces;
 using Application.Features.Reports.command.TasksReport;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Domain.Enum;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,7 +25,6 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
             catch(Exception ex)
             {
                 logger.LogError(ex, "Error processing report jobs");
-
             }
             
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
@@ -35,6 +37,8 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
         var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
         var reportService = scope.ServiceProvider.GetRequiredService<IReportService>();
         var notificationPublisherService = scope.ServiceProvider.GetRequiredService<INotificationPublisherService>();
+        var cloudinary = scope.ServiceProvider.GetRequiredService<Cloudinary>();
+        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
         var pendingJobs = await db.ReportJobs
             .Where(j => j.Status == "Pending")
@@ -57,16 +61,23 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
                     }
                 );
                 var userId = job.RequestedByUserId;
+                
+                var stream = new MemoryStream(fileBytes);
 
-                // Save file locally or to blob storage
-                var filePath = $"Reports/{job.Id}.pdf";
-                await File.WriteAllBytesAsync(filePath, fileBytes, ct);
+                var uploadParams = new RawUploadParams()
+                {
+                    File = new FileDescription($"{job.Id}.pdf", stream),
+                    Folder = "reports",
+                    // PublicId = job.Id.ToString(),
+                    // Overwrite = true,
+                    
+                };
+                var uploadResult = await cloudinary.UploadAsync(uploadParams);
 
                 job.Status = "Completed";
-                job.FilePath = filePath;
+                job.FilePath = uploadResult.SecureUrl.ToString();
                 job.CompletedAt = DateTime.UtcNow;
-                await notificationPublisherService.NotifyReportGeneratedAsync(userId, filePath);
-
+                await notificationPublisherService.NotifyReportGeneratedAsync(userId, uploadResult.SecureUrl.ToString());
             }
             catch (Exception ex)
             {
