@@ -6,7 +6,8 @@ namespace Application.Common.Interfaces;
 
 public interface INotificationService
 {
-    Task<Guid> CreateNotificationAsync(string userId, string message, NotificationType type);
+    Task<Guid> CreateNotificationAsync(string userId, string message, NotificationType type, string? actionUrl,
+        string? actionLabel);
     IQueryable<Notification> GetUserNotificationsAsync(string userId);
     Task MarkAllNotificationsAsReadAsync(string userId);
 }

@@ -9,5 +9,4 @@ public interface INotificationPublisherService
     Task PublishAsync(Notification notification);
     Task PublishToUserAsync(string userId, Notification notification);
     Task NotifyTaskUpdatedAsync(TaskDto taskDto);
-    Task NotifyReportGeneratedAsync(string userId, string link);
 }

@@ -26,9 +26,4 @@ public class NotificationHubServices(IHubContext<NotificationHub> hubContext, IM
     {
         await hubContext.Clients.All.SendAsync("TaskUpdated", taskDto);
     }
-
-    public async Task NotifyReportGeneratedAsync(string userId, string link)
-    {
-        await hubContext.Clients.Group($"user-{userId}").SendAsync("ReportGenerated", link);
-    }
 }

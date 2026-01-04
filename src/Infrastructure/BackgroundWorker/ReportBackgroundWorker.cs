@@ -36,7 +36,6 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
         using var scope = scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
         var reportService = scope.ServiceProvider.GetRequiredService<IReportService>();
-        var notificationPublisherService = scope.ServiceProvider.GetRequiredService<INotificationPublisherService>();
         var cloudinary = scope.ServiceProvider.GetRequiredService<Cloudinary>();
         var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
@@ -60,24 +59,32 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
                         To = job.To
                     }
                 );
-                var userId = job.RequestedByUserId;
                 
                 var stream = new MemoryStream(fileBytes);
-
                 var uploadParams = new RawUploadParams()
                 {
                     File = new FileDescription($"{job.Id}.pdf", stream),
                     Folder = "reports",
-                    // PublicId = job.Id.ToString(),
-                    // Overwrite = true,
-                    
+                    PublicId = job.Id.ToString(),
+
+                    Overwrite = true,
+                    UseFilename = true,
+                    UniqueFilename = false
                 };
                 var uploadResult = await cloudinary.UploadAsync(uploadParams);
+                var downloadUrl = uploadResult.SecureUrl.ToString().Replace("/upload/", "/upload/fl_attachment/");
 
                 job.Status = "Completed";
-                job.FilePath = uploadResult.SecureUrl.ToString();
+                job.FilePath = downloadUrl;
                 job.CompletedAt = DateTime.UtcNow;
-                await notificationPublisherService.NotifyReportGeneratedAsync(userId, uploadResult.SecureUrl.ToString());
+                var message = $"Your report is ready to download";
+                await notificationService.CreateNotificationAsync(
+                    job.RequestedByUserId,
+                    message,
+                    NotificationType.TasksReportGenerated,
+                    downloadUrl,
+                    "Download Report"
+                    );
             }
             catch (Exception ex)
             {
