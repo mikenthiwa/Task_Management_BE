@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.BackgroundWorker;
 
-public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<ReportBackgroundWorker> logger) : BackgroundService
+public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<ReportBackgroundWorker> logger, IBackgroundJobSignal signal) : BackgroundService
 {
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -20,6 +20,7 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
         {
             try
             {
+                await signal.WaitAsync(stoppingToken);
                 await ProcessPendingReports(stoppingToken);
             }
             catch(Exception ex)
@@ -27,7 +28,7 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
                 logger.LogError(ex, "Error processing report jobs");
             }
             
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            // await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }
     
