@@ -2,6 +2,6 @@ namespace Application.Common.Interfaces;
 
 public interface IBackgroundJobSignal
 {
-    Task WaitAsync(CancellationToken cancellationToken);
+    Task WaitAsync(TimeSpan timeSpan, CancellationToken cancellationToken);
     void Signal();
 }

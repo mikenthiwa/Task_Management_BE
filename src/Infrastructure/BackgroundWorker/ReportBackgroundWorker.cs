@@ -20,7 +20,7 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
         {
             try
             {
-                await signal.WaitAsync(stoppingToken);
+                await signal.WaitAsync(TimeSpan.FromMinutes(2), stoppingToken);
                 await ProcessPendingReports(stoppingToken);
             }
             catch(Exception ex)
