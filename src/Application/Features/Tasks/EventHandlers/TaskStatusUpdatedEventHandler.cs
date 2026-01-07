@@ -19,7 +19,7 @@ public class TaskStatusUpdatedEventHandler(INotificationService notificationServ
         // Notify the task creator if they're not the one who updated it
         if (task.CreatorId != null && task.CreatorId != notification.UpdatedBy)
         {
-            await notificationService.CreateNotificationAsync(task.CreatorId, message, NotificationType.TaskStatusUpdated);
+            await notificationService.CreateNotificationAsync(task.CreatorId, message, NotificationType.TaskStatusUpdated, null, null);
         }
     }
 }

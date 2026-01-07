@@ -1,6 +1,7 @@
 using Application.Common.Interfaces;
 using Domain.Entities;
 using Domain.Enum;
+using Domain.ValueObjects;
 
 namespace Infrastructure.Notifications;
 
@@ -8,9 +9,30 @@ public class NotificationService(IApplicationDbContext applicationDbContext,
     INotificationPublisherService notificationPublisherService
     ): INotificationService
 {
-    public async Task<Guid> CreateNotificationAsync(string userId, string message, NotificationType type)
+    public async Task<Guid> CreateNotificationAsync(string userId, string message, NotificationType type, string? actionUrl, string? actionLabel)
     {
-        var notification = new Notification(userId, type, message);
+        
+        // var notification = string.IsNullOrEmpty(actionUrl) && string.IsNullOrEmpty(actionLabel) 
+        //     ? new Notification(userId, type, message)
+        //     : new Notification(userId, type, message)
+        //     {
+        //         Action = new NotificationAction()
+        //         {
+        //             ActionUrl = actionUrl!,
+        //             ActionLabel = actionLabel!
+        //         }
+        //     };
+
+        var notification = new Notification(userId, type, message)
+        {
+             // ActionUrl = actionUrl!, ActionLabel = actionLabel! 
+             Action = new NotificationAction()
+             {
+                 ActionUrl = actionUrl!,
+                 ActionLabel = actionLabel!
+             }
+        };
+        
         applicationDbContext.Notifications.Add(notification);
         await applicationDbContext.SaveChangesAsync(CancellationToken.None);
         await notificationPublisherService.PublishToUserAsync(userId, notification);

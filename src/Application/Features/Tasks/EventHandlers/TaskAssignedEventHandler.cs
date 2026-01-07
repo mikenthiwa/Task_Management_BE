@@ -9,6 +9,6 @@ public class TaskAssignedEventHandler(INotificationService notificationService )
 {
     public async Task Handle(TaskAssignedEvent notification, CancellationToken cancellationToken)
     {
-        await notificationService.CreateNotificationAsync(notification.AssigneeId, $"You have been assigned to task '{notification.Title}'.", NotificationType.TaskAssigned);
+        await notificationService.CreateNotificationAsync(notification.AssigneeId, $"You have been assigned to task '{notification.Title}'.", NotificationType.TaskAssigned, null, null);
     }
 }

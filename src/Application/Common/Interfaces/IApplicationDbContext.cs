@@ -8,6 +8,7 @@ public interface IApplicationDbContext
     DbSet<Task> Tasks {get;}
     DbSet<DomainUser> DomainUsers { get; }
     DbSet<Notification> Notifications { get; }
+    DbSet<ReportJob> ReportJobs { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     
 }
