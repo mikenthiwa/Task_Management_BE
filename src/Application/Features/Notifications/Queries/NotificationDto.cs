@@ -1,5 +1,6 @@
 using Domain.Entities;
 using Domain.Enum;
+using Domain.ValueObjects;
 
 namespace Application.Features.Notifications.Queries;
 
@@ -10,7 +11,7 @@ public class NotificationDto
     public DateTimeOffset CreatedAt { get; set; }
     public bool IsRead { get; set; }
     public NotificationType NotificationType { get; set; }
-    
+    public NotificationAction? Action { get; set; }
     public class Mapping: Profile
     {
         public Mapping()

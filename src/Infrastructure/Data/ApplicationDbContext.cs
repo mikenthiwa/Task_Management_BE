@@ -1,6 +1,7 @@
 using System.Reflection;
 using Application.Common.Interfaces;
 using Domain.Entities;
+using Domain.ValueObjects;
 using Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -14,6 +15,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Task> Tasks => Set<Task>();
     public DbSet<DomainUser> DomainUsers => Set<DomainUser>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<ReportJob> ReportJobs => Set<ReportJob>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {

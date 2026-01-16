@@ -11,6 +11,6 @@ public class TaskCreatedEventHandler(INotificationService notificationService) :
     {
         var task = notification.TaskItem;
         var message = $"Task '{task.Title}' has been created.";
-        await notificationService.CreateNotificationAsync(task.CreatorId!, message, NotificationType.TaskCreated);
+        await notificationService.CreateNotificationAsync(task.CreatorId!, message, NotificationType.TaskCreated, null, null);
     }
 }

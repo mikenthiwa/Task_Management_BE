@@ -35,4 +35,12 @@ public static class EndpointRouteBuilderExtension
 
         return builder;
     }
+    
+    public static IEndpointRouteBuilder MapPatch(this IEndpointRouteBuilder builder, Delegate handler, [StringSyntax("Route")] string pattern)
+    {
+        builder.MapPatch(pattern, handler)
+            .WithName(handler.Method.Name);
+
+        return builder;
+    }
 }
