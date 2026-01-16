@@ -1,6 +1,6 @@
 services:
   api:
-    image: taskmanagementregistry.azurecr.io/task_management-api:dev
+    image: taskmanagementregistry.azurecr.io/task-management-api:dev
     build: .
     environment:
       ASPNETCORE_ENVIRONMENT: Development
