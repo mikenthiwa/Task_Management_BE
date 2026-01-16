@@ -48,7 +48,6 @@ public class ApplicationDbContextInitializer(
             }
             else
             {
-                Console.WriteLine("This line should be running in PROD!");
                 await dbContext.Database.MigrateAsync();
             }
         }
