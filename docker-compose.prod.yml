@@ -1,0 +1,27 @@
+services:
+  api:
+    image: taskmanagementregistry.azurecr.io/task-management-api:prod
+    build: .
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: ${API_CONNECTION_STRING}
+      Cors__AllowedOrigins: ${ALLOWED_ORIGINS}
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER}
+      Jwt__Audience: ${WT_AUDIENCE}
+      JWT__AccessTokenExpiryMinutes: ${JWT_ACCESS_TOKEN_EXPIRY_MINUTES}
+      JWT__RefreshTokenExpiryDays: ${JWT_REFRESH_TOKEN_EXPIRY_DAYS}
+      CloudinaryUrl: ${CLOUDINARY_URL}
+      Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME}
+      Cloudinary__ApiKey: ${CLOUDINARY_API_KEY}
+      Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET}
+    ports:
+      - "8080:8080"
+  postgres:
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5435:5432"
