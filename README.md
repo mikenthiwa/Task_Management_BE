@@ -11,6 +11,10 @@
   dotnet user-secrets init
   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Username=postgres;Password=<your-password>;Database=TaskLocalDb"
   dotnet user-secrets set "Cors:AllowedOrigins" "http://localhost:3000"
+  dotnet user-secrets set "CLOUDINARY_URL" "cloudinary://<api_key>:<api_secret"@<cloud_name>"
+  dotnet user-secrets set "Cloudinary:CloudName" "<cloud_name>"
+  dotnet user-secrets set "Cloudinary:ApiKey" "<api_key>"
+  dotnet user-secrets set "Cloudinary:ApiSecret" "<api_secret>"
   ```
 
 ## Docker
@@ -22,10 +26,10 @@
 - Set `ALLOWED_ORIGINS` in `.env` using a semicolon-separated list (e.g. `http://localhost:3000;https://app.example.com`). The API reads `Cors:AllowedOrigins` from that environment variable when running in Docker.
 - Build and run the stack (API + Postgres):
   ```bash
-  docker compose up --build
+  docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up --build
   ```
 - The API listens on `http://localhost:8080`. The container uses the connection string supplied in `.env`.
-- If you change service ports or credentials, update `.env` and rerun `docker compose up`.
+- If you change service ports or credentials, update `.env` and rerun `docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up`.
 
 ## Database Lifecycle
 - In development the database initializer runs when `ASPNETCORE_ENVIRONMENT=Development`. Inside Docker it connects to the compose Postgres instance without dropping the schema.
@@ -45,7 +49,7 @@
   `Cors__AllowedOrigins="http://localhost:3000;https://app.example.com"`
 
 ## Azure Container Deployment
-- Authenticate with Azure and your container registry:
+- Authenticate with Azure and your container registry(taskmanagementregistry.azurecr.io):
   ```bash
   az login
   az acr login -n <registry-name>
@@ -53,7 +57,7 @@
 - Build and tag the Docker image using the registry login server (publish as 64-bit Linux for Azure):
   ```bash
   docker buildx build --platform linux/amd64 \
-    -t <registry-name>.azurecr.io/task-management-be:latest .
+    -t <registry-name>.azurecr.io/task-management-be:<environment> .
   ```
 - Push the image to Azure Container Registry:
   ```bash
@@ -63,6 +67,5 @@
   - `ASPNETCORE_ENVIRONMENT=Production`
   - `ConnectionStrings__DefaultConnection=<azure-postgres-connection-string>`
   - `SeedData__Enabled=true` (optional, run once to seed the admin user)
-  - `SeedData__Admin__Password=<strong-password>` (only when seeding)
   - `Cors__AllowedOrigins=http://localhost:3000;https://app.example.com`
 - After the first successful start, disable seeding by setting `SeedData__Enabled=false` so the admin isn’t recreated on every restart.
