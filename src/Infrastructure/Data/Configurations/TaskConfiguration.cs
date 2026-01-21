@@ -10,6 +10,11 @@ public class TaskConfiguration : IEntityTypeConfiguration<Task>
     public void Configure(EntityTypeBuilder<Task> builder)
     {
         builder.ToTable("Tasks");
+        //Configure RowVersion as concurrency token
+        builder.Property(t => t.RowVersion)
+            .IsRowVersion()
+            .IsConcurrencyToken()
+            .ValueGeneratedOnAddOrUpdate();
 
         builder.HasOne(task => task.Assignee)
             .WithMany(u => u.AssignedTasks)
@@ -22,7 +27,6 @@ public class TaskConfiguration : IEntityTypeConfiguration<Task>
             .HasForeignKey(t => t.CreatorId)
             .HasPrincipalKey(u => u.Id)
             .OnDelete(DeleteBehavior.SetNull);
-        
         
         builder.HasIndex(t => t.AssigneeId);
         builder.HasIndex(t => t.CreatorId);

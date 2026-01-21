@@ -16,5 +16,7 @@ public class Task : BaseAuditableEntity
     
     public DomainUser? Assignee { get; set; }
     public DomainUser? Creator { get; set; }
+    //Concurrency token
+    public uint RowVersion { get; private set; }
     
 }

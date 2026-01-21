@@ -12,6 +12,7 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
     private readonly Dictionary<Type, Func<HttpContext, Exception, Task>> _exceptionHandlers = new()
     {
         { typeof(ValidationException), HandleValidationException },
+        { typeof(Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException), HandleConcurrencyException },
         { typeof(NotFoundException), HandleNotFoundException },
         { typeof(UnauthorizedAccessException), HandleUnauthorizedAccessException },
         { typeof(ForbiddenAccessException), HandleForbiddenAccessException },
@@ -77,6 +78,17 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3"
         });
     }
-    
-    
+
+    private static async Task HandleConcurrencyException(HttpContext httpContext, Exception ex)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+
+        await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = "Conflict",
+            Detail = "The resource was modified by another user. Please refresh and try again.",
+            Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.8"
+        });
+    }
 }

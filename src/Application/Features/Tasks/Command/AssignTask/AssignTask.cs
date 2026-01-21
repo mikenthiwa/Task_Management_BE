@@ -13,13 +13,18 @@ public record AssignTaskCommand : IRequest
 {
     [FromRoute] public int TaskId { get; set; }
     public required string AssignedId { get; init; }
+    public required uint RowVersion { get; init; }
 }
-public class AssignTaskCommandHandler(IApplicationDbContext applicationDb, IMapper mapper, INotificationPublisherService notificationPublisherService) : IRequestHandler<AssignTaskCommand>
+public class AssignTaskCommandHandler(IApplicationDbContext applicationDb,
+    IMapper mapper, 
+    INotificationPublisherService notificationPublisherService
+) : IRequestHandler<AssignTaskCommand>
 {
     public async Task Handle(AssignTaskCommand request, CancellationToken cancellationToken)
     {
-        var entity = await applicationDb.Tasks.FindAsync(new object[] { request.TaskId }, cancellationToken);
+        var entity = await applicationDb.Tasks.FindAsync([ request.TaskId ], cancellationToken);
         Guard.Against.NotFound(request.TaskId, entity);
+        applicationDb.Entry(entity).Property("RowVersion").OriginalValue = request.RowVersion;
         entity.AssigneeId = request.AssignedId;
         entity.AddDomainEvent(new TaskAssignedEvent(entity.Id, entity.Title, request.AssignedId));
         await applicationDb.SaveChangesAsync(cancellationToken);

@@ -12,6 +12,8 @@ public class TaskDto
     public string? Title { get; init; }
     public string? Description { get; init; }
     public Status Status { get; init; }
+    public uint RowVersion { get; init; }
+    
     public UserBriefDto? Assignee { get; init; }
     public UserBriefDto? Creator { get; init; }
     public record UserBriefDto(string Id, string Username, string Email);
