@@ -5,6 +5,7 @@ using Domain.ValueObjects;
 using Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Task = Domain.Entities.Task;
 using Notification = Domain.Entities.Notification;
 
@@ -16,6 +17,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DomainUser> DomainUsers => Set<DomainUser>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<ReportJob> ReportJobs => Set<ReportJob>();
+    EntityEntry IApplicationDbContext.Entry(object entity) => base.Entry(entity);
     
     protected override void OnModelCreating(ModelBuilder builder)
     {

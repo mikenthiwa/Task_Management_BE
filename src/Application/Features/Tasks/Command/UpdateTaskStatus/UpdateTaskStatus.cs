@@ -26,7 +26,6 @@ public class UpdateTaskStatusCommandHandler(
         var entity = await applicationDb.Tasks.FindAsync(new object[] { request.TaskId }, cancellationToken);
         Guard.Against.NotFound(request.TaskId, entity);
 
-        // Ensure only the assigned user can update the task status
         if (entity.AssigneeId != currentUserService.UserId)
         {
             throw new UnauthorizedAccessException("Only the assigned user can update the task status");
