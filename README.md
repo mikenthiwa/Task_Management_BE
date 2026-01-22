@@ -17,6 +17,11 @@
   dotnet user-secrets set "Cloudinary:ApiSecret" "<api_secret>"
   ```
 
+- NB: BUILD RABBITMQ ONLY (DURING TESTING FOR DEVELOPMENT ONLY):*
+  ```bash
+  docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up -d rabbitmq
+    ```
+
 ## Docker
 - Copy the sample environment file and update the secrets:
   ```bash

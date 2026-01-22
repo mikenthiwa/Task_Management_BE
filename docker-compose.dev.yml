@@ -25,3 +25,10 @@ services:
       POSTGRES_DB: ${DEV_POSTGRES_DB}
     ports:
       - "5434:5432"
+  rabbitmq:
+    environment:
+      RABBITMQ_DEFAULT_USER: ${DEV_RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${DEV_RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"

@@ -22,6 +22,7 @@
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageVersion Include="NSwag.AspNetCore" Version="14.6.2" />
     <PackageVersion Include="QuestPDF" Version="2025.12.1" />
+    <PackageVersion Include="RabbitMQ.Client" Version="7.2.0" />
     <PackageVersion Include="SharpGrip.FluentValidation.AutoValidation.Endpoints" Version="1.5.0" />
   </ItemGroup>
 </Project>
