@@ -22,7 +22,6 @@ public sealed class RabbitMqMessageBus : IMessageBus, IDisposable
     {
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
         await _channel.Result.BasicPublishAsync(exchange: exchange, routingKey: routingKey, body, cancellationToken: cancellationToken);
-        // return Task.CompletedTask;
     }
     
     public void Dispose()
