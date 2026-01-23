@@ -1,6 +1,6 @@
 using Application.Common.Interfaces;
 using Application.Features.Reports.command.TasksReport;
-using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+using Application.Features.Tasks.Queries.GetTasksWithPagination;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;

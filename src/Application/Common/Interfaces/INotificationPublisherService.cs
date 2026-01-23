@@ -1,4 +1,4 @@
-using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+using Application.Features.Tasks.Queries.GetTasksWithPagination;
 using Domain.Entities;
 using Task = System.Threading.Tasks.Task;
 

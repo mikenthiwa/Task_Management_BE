@@ -6,14 +6,14 @@ using Task = Domain.Entities.Task;
 
 namespace Application.Features.Tasks.Command.CreateTask;
 
-public record CreateTaskCommand : IRequest<int>
+public record CreateTaskCommand : IRequest<Guid>
 {
     public required string Title { get; init; }
     public string? Description { get; init; }
 }
-public class CreateTask(IApplicationDbContext applicationDbContext, ICurrentUserService currentUserService) : IRequestHandler<CreateTaskCommand, int>
+public class CreateTask(IApplicationDbContext applicationDbContext, ICurrentUserService currentUserService) : IRequestHandler<CreateTaskCommand, Guid>
 {
-    public async Task<int> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
     {
         var entity = new Task
         {
