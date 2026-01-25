@@ -7,7 +7,6 @@ namespace Infrastructure.RabbitMq;
 
 public sealed class RabbitMqMessageBus : IMessageBus, IDisposable
 {
-    private readonly Task<IConnection> _connection;
     private readonly Task<IChannel> _channel;
     
     public RabbitMqMessageBus(string hostName, string userName = "admin", string password = "admin") {
@@ -16,8 +15,8 @@ public sealed class RabbitMqMessageBus : IMessageBus, IDisposable
             publisherConfirmationTrackingEnabled: true
             );
         var factory = new ConnectionFactory { HostName = hostName, UserName = userName, Password = password };
-        _connection = factory.CreateConnectionAsync();
-        _channel = _connection.Result.CreateChannelAsync(channelOpt);
+        var connection = factory.CreateConnectionAsync();
+        _channel = connection.Result.CreateChannelAsync(channelOpt);
         _channel.Result.ExchangeDeclareAsync(exchange: "task.events", type: ExchangeType.Topic, durable: true);
     }
 

@@ -12,7 +12,6 @@ public class TaskCreatedEventHandler(
     public async Task Handle(TaskCreatedEvent notification, CancellationToken cancellationToken)
     {
         var task = notification.TaskItem;
-        Console.WriteLine($"Publishing TaskCreatedIntegrationEvent for Task ID: {task.Id}");
         var integrationEvent = new TaskCreatedIntegrationEvent
         {
             TaskId = task.Id,

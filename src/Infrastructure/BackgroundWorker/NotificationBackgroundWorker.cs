@@ -21,7 +21,7 @@ public class NotificationBackgroundWorker(IServiceProvider serviceProvider) : Ba
         _channel = _connection.Result.CreateChannelAsync(cancellationToken: stoppingToken);
 
         await _channel.Result.ExchangeDeclareAsync(exchange: "task.events", type: ExchangeType.Topic, durable: true, autoDelete: false, cancellationToken: stoppingToken);
-        QueueDeclareOk queueDeclareResult = await _channel.Result.QueueDeclareAsync("notification.task.created" ,cancellationToken: stoppingToken);
+        QueueDeclareOk queueDeclareResult = await _channel.Result.QueueDeclareAsync("notification.task.created",durable:false, exclusive:false, autoDelete:false, cancellationToken: stoppingToken);
         string queueName = queueDeclareResult.QueueName;
         await _channel.Result.QueueBindAsync(queue: queueName, exchange: "task.events",
             routingKey: "task.created", cancellationToken: stoppingToken);
@@ -35,7 +35,6 @@ public class NotificationBackgroundWorker(IServiceProvider serviceProvider) : Ba
         // Process the message and create notifications as needed
         byte[] body = ea.Body.ToArray();
         var message = JsonSerializer.Deserialize<TaskCreatedIntegrationEvent>(body)!;
-        Console.WriteLine(" [x] Received {0}", message);
         using var scope = serviceProvider.CreateScope();
         var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
         var messageDescription = $"Task '{message.Title}' has been created.";
