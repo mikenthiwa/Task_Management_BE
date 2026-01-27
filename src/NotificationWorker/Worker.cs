@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Application.Common.Interfaces;
+using System.Net.Http.Json;
 using Application.Features.Tasks.IntegrationEvent;
 using Domain.Enum;
 using RabbitMQ.Client;
@@ -32,9 +32,19 @@ public class Worker(IServiceProvider serviceProvider) : BackgroundService
         byte[] body = ea.Body.ToArray();
         var message = JsonSerializer.Deserialize<TaskCreatedIntegrationEvent>(body)!;
         using var scope = serviceProvider.CreateScope();
-        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+        var httpClientFactory = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>();
+        var httpClient = httpClientFactory.CreateClient("web");
         var messageDescription = $"Task '{message.Title}' has been created.";
-        await notificationService.CreateNotificationAsync(message.CreatorId!, messageDescription,
-            NotificationType.TaskCreated, null, null);
+
+        var response = await httpClient.PostAsJsonAsync("api/NotificationsInternal/internal/notifications", new
+        {
+            UserId = message.CreatorId!,
+            Message = messageDescription,
+            Type = (int)NotificationType.TaskCreated,
+            ActionUrl = (string?)null,
+            ActionLabel = (string?)null
+        });
+
+        response.EnsureSuccessStatusCode();
     }
 }
