@@ -15,7 +15,14 @@ builder.Services.AddHttpClient("web", client =>
     client.BaseAddress = new Uri(builder.Configuration["WebBaseUrl"]!);
     client.DefaultRequestHeaders.Add("X-Worker-Key", builder.Configuration["WorkerApiKey"]!);
 });
-builder.Services.AddHostedService<Worker>();
+builder.Services.AddHostedService(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var hostName = configuration["RabbitMq:HostName"] ?? "localhost";
+    var userName = configuration["RabbitMq:UserName"] ?? "admin";
+    var password = configuration["RabbitMq:Password"] ?? "admin";
+    return new Worker(sp, hostName, userName, password);
+});
 
 var host = builder.Build();
 host.Run();

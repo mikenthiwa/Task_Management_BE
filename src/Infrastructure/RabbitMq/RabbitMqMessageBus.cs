@@ -9,7 +9,7 @@ public sealed class RabbitMqMessageBus : IMessageBus, IDisposable
 {
     private readonly Task<IChannel> _channel;
     
-    public RabbitMqMessageBus(string hostName, string userName = "admin", string password = "admin") {
+    public RabbitMqMessageBus(string hostName, string userName, string password) {
         var channelOpt = new CreateChannelOptions(
             publisherConfirmationsEnabled: true,
             publisherConfirmationTrackingEnabled: true

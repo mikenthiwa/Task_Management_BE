@@ -16,6 +16,9 @@
   dotnet user-secrets set "Cloudinary:ApiKey" "<api_key>"
   dotnet user-secrets set "Cloudinary:ApiSecret" "<api_secret>"
   dotnet user-secrets set "WorkerApiKey" "<shared-worker-key>"
+  dotnet user-secrets set "RabbitMQ:HostName" "<rabbitmq-host>"
+  dotnet user-secrets set "RabbitMQ:UserName" "<rabbitmq-username>"
+  dotnet user-secrets set "RabbitMQ:Password" "<rabbitmq-password>"
   ```
 
 - NB: BUILD RABBITMQ ONLY (DURING TESTING FOR DEVELOPMENT ONLY):*
@@ -34,11 +37,18 @@
   dotnet user-secrets init
   dotnet user-secrets set "WebBaseUrl" "http://localhost:5230/"
   dotnet user-secrets set "WorkerApiKey" "<shared-worker-key>"
+  dotnet user-secrets set "RabbitMQ:HostName" "<rabbitmq-host>"
+  dotnet user-secrets set "RabbitMQ:UserName" "<rabbitmq-username>"
+  dotnet user-secrets set "RabbitMQ:Password" "<rabbitmq-password>"
   ```
 - Run the worker:
   ```bash
   dotnet run --project src/NotificationWorker
   ```
+- RabbitMQ settings for the worker (optional; defaults to `localhost/admin/admin`):
+  - `RabbitMq:HostName`
+  - `RabbitMq:UserName`
+  - `RabbitMq:Password`
 
 ## Docker
 - Copy the sample environment file and update the secrets:
