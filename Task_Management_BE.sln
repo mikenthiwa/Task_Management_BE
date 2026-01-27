@@ -2,20 +2,20 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{184FBAA3-3191-42B5-9127-EB77C8A82797}"
 				ProjectSection(SolutionItems) = preProject
-                                    .editorconfig = .editorconfig
-                                    .gitignore = .gitignore
-                                    Directory.Build.props = Directory.Build.props
-                                    Directory.Packages.props = Directory.Packages.props
-                                    global.json = global.json
-                                    README.md = README.md
-                                    docker-compose.yml = docker-compose.yml
-                                    docker-compose.dev.yml = docker-compose.dev.yml
-                                    docker-compose.prod.yml = docker-compose.prod.yml
-                                    Dockerfile = Dockerfile
-                                    .dockerignore = .dockerignore
-                                    .env.example = .env.example
-                                    .env.development = .env.development
-                                    .env = .env
+                    .editorconfig = .editorconfig
+                    .gitignore = .gitignore
+                    Directory.Build.props = Directory.Build.props
+                    Directory.Packages.props = Directory.Packages.props
+                    global.json = global.json
+                    README.md = README.md
+                    docker-compose.yml = docker-compose.yml
+                    docker-compose.dev.yml = docker-compose.dev.yml
+                    docker-compose.prod.yml = docker-compose.prod.yml
+                    Dockerfile = Dockerfile
+                    .dockerignore = .dockerignore
+                    .env.example = .env.example
+                    .env.development = .env.development
+                    .env = .env
 				EndProjectSection
 EndProject
 
@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "src\Infra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "src\Web\Web.csproj", "{6F63FFD4-6A11-46C7-B27D-860BFE411A02}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationWorker", "src\NotificationWorker\NotificationWorker.csproj", "{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,7 @@ Global
 		{8C647C38-E51D-4BFE-9CB2-00E2A5427043} = {AB1183FE-D159-47DA-97F2-4E5947C9B67F}
 		{2C732661-6B6F-4C6B-8660-51D19D52D05E} = {AB1183FE-D159-47DA-97F2-4E5947C9B67F}
 		{6F63FFD4-6A11-46C7-B27D-860BFE411A02} = {AB1183FE-D159-47DA-97F2-4E5947C9B67F}
+		{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21} = {AB1183FE-D159-47DA-97F2-4E5947C9B67F}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{860072B0-5297-487F-9306-891CB6511AF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -57,5 +60,9 @@ Global
 		{6F63FFD4-6A11-46C7-B27D-860BFE411A02}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F63FFD4-6A11-46C7-B27D-860BFE411A02}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F63FFD4-6A11-46C7-B27D-860BFE411A02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
