@@ -3,7 +3,6 @@ using Application.Common.Interfaces;
 using Application.Features.Tasks.Queries.GetTasksWithPagination;
 using Ardalis.GuardClauses;
 using AutoMapper.QueryableExtensions;
-using Domain.Enum;
 using Domain.Events;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +14,12 @@ public record AssignTaskCommand : IRequest
     [FromRoute] public Guid TaskId { get; set; }
     public required string AssignedId { get; init; }
 }
+
 public class AssignTaskCommandHandler(IApplicationDbContext applicationDb, IMapper mapper, INotificationPublisherService notificationPublisherService) : IRequestHandler<AssignTaskCommand>
 {
     public async Task Handle(AssignTaskCommand request, CancellationToken cancellationToken)
     {
-        var entity = await applicationDb.Tasks.FindAsync(new object[] { request.TaskId }, cancellationToken);
+        var entity = await applicationDb.Tasks.FindAsync( [request.TaskId], cancellationToken);
         Guard.Against.NotFound(request.TaskId, entity);
         entity.AssigneeId = request.AssignedId;
         entity.AddDomainEvent(new TaskAssignedEvent(entity.Id, entity.Title, request.AssignedId));

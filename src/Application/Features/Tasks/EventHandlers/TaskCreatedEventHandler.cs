@@ -1,5 +1,6 @@
 using Application.Common.Interfaces;
-using Application.Features.Tasks.IntegrationEvent;
+using Application.Common.Models;
+using Domain.Enum;
 using Domain.Events;
 using MediatR;
 
@@ -12,12 +13,11 @@ public class TaskCreatedEventHandler(
     public async Task Handle(TaskCreatedEvent notification, CancellationToken cancellationToken)
     {
         var task = notification.TaskItem;
-        var integrationEvent = new TaskCreatedIntegrationEvent
+        var integrationEvent = new NotificationIntegrationEvent
         {
-            TaskId = task.Id,
-            Title = task.Title,
-            Description = task.Description,
-            CreatorId = task.CreatorId!,
+            Type = NotificationType.TaskCreated,
+            Message = $"Task '{task.Title}' has been created.",
+            UserId = task.CreatorId!,
         };
         await messageBus.PublishAsync(integrationEvent, exchange: "task.events", routingKey: "task.created", cancellationToken);
     }
