@@ -1,7 +1,6 @@
 using Application.Common.Interfaces;
 using Application.Common.Mappings;
 using Application.Common.Models;
-using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
 using AutoMapper.QueryableExtensions;
 using Domain.Enum;
 using MediatR;
@@ -23,7 +22,7 @@ public class GetTasksWithPaginationHandler(IApplicationDbContext context, IMappe
         return await context.Tasks
             .AsNoTracking()
             .TaskQuery(request)
-            .OrderByDescending(t => t.Id)
+            .OrderByDescending(t => t.CreatedAt)
             .ProjectTo<TaskDto>(mapper.ConfigurationProvider)
             .PaginatedListAsync(request.PageNumber, request.PageSize);
     }

@@ -1,5 +1,6 @@
 using Application.Common.Interfaces;
-using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+// using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+using Application.Features.Tasks.Queries.GetTasksWithPagination;
 using Ardalis.GuardClauses;
 using AutoMapper.QueryableExtensions;
 using Domain.Enum;
@@ -11,7 +12,7 @@ namespace Application.Features.Tasks.Command.AssignTask;
 
 public record AssignTaskCommand : IRequest
 {
-    [FromRoute] public int TaskId { get; set; }
+    [FromRoute] public Guid TaskId { get; set; }
     public required string AssignedId { get; init; }
 }
 public class AssignTaskCommandHandler(IApplicationDbContext applicationDb, IMapper mapper, INotificationPublisherService notificationPublisherService) : IRequestHandler<AssignTaskCommand>

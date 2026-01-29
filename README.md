@@ -15,7 +15,40 @@
   dotnet user-secrets set "Cloudinary:CloudName" "<cloud_name>"
   dotnet user-secrets set "Cloudinary:ApiKey" "<api_key>"
   dotnet user-secrets set "Cloudinary:ApiSecret" "<api_secret>"
+  dotnet user-secrets set "WorkerApiKey" "<shared-worker-key>"
+  dotnet user-secrets set "RabbitMQ:HostName" "<rabbitmq-host>"
+  dotnet user-secrets set "RabbitMQ:UserName" "<rabbitmq-username>"
+  dotnet user-secrets set "RabbitMQ:Password" "<rabbitmq-password>"
   ```
+
+- NB: BUILD RABBITMQ ONLY (DURING TESTING FOR DEVELOPMENT ONLY):*
+  ```bash
+  docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up -d rabbitmq
+    ```
+
+## Notification Worker (SignalR publishing via web API)
+- The worker publishes notifications by calling the web API endpoint `POST /api/NotificationsInternal/internal/notifications`.
+- Configure these settings for both the web app and the worker:
+  - `WorkerApiKey`: shared secret sent in the `X-Worker-Key` header.
+  - `WebBaseUrl`: base URL for the web app (worker only), e.g. `http://localhost:5000/`.
+- Example worker user secrets:
+  ```bash
+  cd src/NotificationWorker
+  dotnet user-secrets init
+  dotnet user-secrets set "WebBaseUrl" "http://localhost:5230/"
+  dotnet user-secrets set "WorkerApiKey" "<shared-worker-key>"
+  dotnet user-secrets set "RabbitMQ:HostName" "<rabbitmq-host>"
+  dotnet user-secrets set "RabbitMQ:UserName" "<rabbitmq-username>"
+  dotnet user-secrets set "RabbitMQ:Password" "<rabbitmq-password>"
+  ```
+- Run the worker:
+  ```bash
+  dotnet run --project src/NotificationWorker
+  ```
+- RabbitMQ settings for the worker (optional; defaults to `localhost/admin/admin`):
+  - `RabbitMq:HostName`
+  - `RabbitMq:UserName`
+  - `RabbitMq:Password`
 
 ## Docker
 - Copy the sample environment file and update the secrets:
@@ -61,7 +94,7 @@
   ```
 - Push the image to Azure Container Registry:
   ```bash
-  docker push <registry-name>.azurecr.io/task-management-be:latest
+  docker push <registry-name>.azurecr.io/task-management-be:<environment>
   ```
 - Configure your hosting target (App Service, Container Apps, or Container Instances) to pull that image and supply required settings via environment variables:
   - `ASPNETCORE_ENVIRONMENT=Production`

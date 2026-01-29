@@ -1,9 +1,8 @@
 using Application.Common.Models;
 using Application.Features.Tasks.Command.AssignTask;
 using Application.Features.Tasks.Command.CreateTask;
-using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
-using Application.Features.Tasks.Command.UpdateTaskStatus;
 using Application.Features.Tasks.Queries.GetTasksWithPagination;
+using Application.Features.Tasks.Command.UpdateTaskStatus;
 using Application.Models;
 using Domain.Enum;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -46,7 +45,7 @@ public class Tasks : EndpointGroupBase
     }
 
     private async Task<Results<Ok<Result>, BadRequest>> AssignTask(
-        [FromRoute] int taskId,
+        [FromRoute] Guid taskId,
         ISender sender,
         [FromBody] AssignTaskCommand command
     )
@@ -57,7 +56,7 @@ public class Tasks : EndpointGroupBase
     }
 
     private async Task<Results<Ok<Result>, BadRequest>> UpdateTaskStatus(
-        [FromRoute] int taskId,
+        [FromRoute] Guid taskId,
         ISender sender,
         [FromBody] UpdateTaskStatusCommand command
     )

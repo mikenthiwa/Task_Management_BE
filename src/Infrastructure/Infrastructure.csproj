@@ -18,6 +18,7 @@
       <PackageReference Include="Microsoft.Extensions.Hosting" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
       <PackageReference Include="QuestPDF" />
+      <PackageReference Include="RabbitMQ.Client" />
     </ItemGroup>
 
     <ItemGroup>

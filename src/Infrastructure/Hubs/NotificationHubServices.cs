@@ -1,6 +1,6 @@
 using Application.Common.Interfaces;
 using Application.Features.Notifications.Queries;
-using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+using Application.Features.Tasks.Queries.GetTasksWithPagination;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.AspNetCore.SignalR;
