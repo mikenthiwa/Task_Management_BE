@@ -6,7 +6,12 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
-
+  notification-worker:
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      api:
+        condition: service_started
   postgres:
     image: postgres:15-alpine
     healthcheck:

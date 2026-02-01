@@ -1,7 +1,9 @@
 services:
   api:
     image: taskmanagementregistry.azurecr.io/task-management-api:dev
-    build: .
+    build:
+      context: .
+      target: web
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
@@ -16,8 +18,25 @@ services:
       Cloudinary__CloudName: ${DEV_CLOUDINARY_CLOUD_NAME}
       Cloudinary__ApiKey: ${DEV_CLOUDINARY_API_KEY}
       Cloudinary__ApiSecret: ${DEV_CLOUDINARY_API_SECRET}
+      WorkerApiKey: ${DEV_WORKER_API_KEY}
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${DEV_RABBITMQ_DEFAULT_USER}
+      RabbitMq__Password: ${DEV_RABBITMQ_DEFAULT_PASS}
     ports:
       - "8080:8080"
+  notification-worker:
+    image: taskmanagementregistry.azurecr.io/task-management-worker:dev
+    build:
+      context: .
+      target: worker
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      WebBaseUrl: http://api:8080/
+      WorkerApiKey: ${DEV_WORKER_API_KEY}
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${DEV_RABBITMQ_DEFAULT_USER}
+      RabbitMq__Password: ${DEV_RABBITMQ_DEFAULT_PASS}
+      ConnectionStrings__DefaultConnection: ${DEV_API_CONNECTION_STRING}
   postgres:
     environment:
       POSTGRES_USER: ${DEV_POSTGRES_USER}

@@ -87,15 +87,13 @@
   az login
   az acr login -n <registry-name>
   ```
-- Build and tag the Docker image using the registry login server (publish as 64-bit Linux for Azure):
+- Build, tag, and push the Docker image using the registry login server (publish as 64-bit Linux for Azure):
   ```bash
-  docker buildx build --platform linux/amd64 \
-    -t <registry-name>.azurecr.io/task-management-be:<environment> .
+  docker buildx build --platform linux/amd64 -t <registry-name>.azurecr.io/task-management-worker:<tag> --target worker --push .
+  
+  docker buildx build --platform linux/amd64 -t taskmanagementregistry.azurecr.io/task-management-api:dev --target web --push .
   ```
-- Push the image to Azure Container Registry:
-  ```bash
-  docker push <registry-name>.azurecr.io/task-management-be:<environment>
-  ```
+
 - Configure your hosting target (App Service, Container Apps, or Container Instances) to pull that image and supply required settings via environment variables:
   - `ASPNETCORE_ENVIRONMENT=Production`
   - `ConnectionStrings__DefaultConnection=<azure-postgres-connection-string>`
