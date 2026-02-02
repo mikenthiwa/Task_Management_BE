@@ -1,11 +1,14 @@
 using Application.Common.Interfaces;
-// using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+using Application.Common.Options;
+using Application.Features.Tasks.Caching;
 using Application.Features.Tasks.Queries.GetTasksWithPagination;
 using Ardalis.GuardClauses;
 using AutoMapper.QueryableExtensions;
 using Domain.Events;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace Application.Features.Tasks.Command.AssignTask;
 
@@ -15,7 +18,12 @@ public record AssignTaskCommand : IRequest
     public required string AssignedId { get; init; }
 }
 
-public class AssignTaskCommandHandler(IApplicationDbContext applicationDb, IMapper mapper, INotificationPublisherService notificationPublisherService) : IRequestHandler<AssignTaskCommand>
+public class AssignTaskCommandHandler(
+    IApplicationDbContext applicationDb,
+    IMapper mapper,
+    INotificationPublisherService notificationPublisherService,
+    IMemoryCache cache,
+    IOptions<TaskCachingOptions> cacheOptions) : IRequestHandler<AssignTaskCommand>
 {
     public async Task Handle(AssignTaskCommand request, CancellationToken cancellationToken)
     {
@@ -24,6 +32,10 @@ public class AssignTaskCommandHandler(IApplicationDbContext applicationDb, IMapp
         entity.AssigneeId = request.AssignedId;
         entity.AddDomainEvent(new TaskAssignedEvent(entity.Id, entity.Title, request.AssignedId));
         await applicationDb.SaveChangesAsync(cancellationToken);
+        if (cacheOptions.Value.Enabled)
+        {
+            TaskCacheKey.BumpVersion(cache);
+        }
         
         var taskDto = await applicationDb.Tasks
             .AsNoTracking()
