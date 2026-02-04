@@ -13,8 +13,6 @@ public static class DependencyInjection
     {
         var allowedOrigins = configuration["Cors:AllowedOrigins"]
             ?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
-        services.AddMemoryCache();
-        services.Configure<TaskCachingOptions>(configuration.GetSection("Caching:Tasks"));
         services.AddOpenApi();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddEndpointsApiExplorer();

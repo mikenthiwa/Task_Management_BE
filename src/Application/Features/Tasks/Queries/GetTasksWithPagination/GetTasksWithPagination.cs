@@ -64,7 +64,8 @@ public class GetTasksWithPaginationHandler(
             logger.LogDebug("Tasks cache miss for {CacheKey}", cacheKey);
         }
         var result = await FetchTasksAsync(request, cancellationToken);
-        cache.Set(cacheKey, result, TimeSpan.FromSeconds(options.TtlSeconds));
+        var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromSeconds(options.TtlSeconds));
+        cache.Set(cacheKey, result, cacheEntryOptions);
         await redisCache.SetAsync(cacheKey, result, TimeSpan.FromSeconds(options.TtlSeconds), cancellationToken);
         return result;
     }

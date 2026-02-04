@@ -1,4 +1,5 @@
 using Application.Common.Interfaces;
+using Application.Common.Options;
 using CloudinaryDotNet;
 using Domain.Constants;
 using Infrastructure.BackgroundWorker;
@@ -134,6 +135,7 @@ public static class DependencyInjection
             var port = config.GetValue<int?>("RabbitMq:Port") ?? 5672;
             return new RabbitMqMessageBus(hostName, userName, password, virtualHost, port);
         });
+        services.AddMemoryCache();
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();

@@ -19,6 +19,7 @@
   dotnet user-secrets set "RabbitMQ:HostName" "<rabbitmq-host>"
   dotnet user-secrets set "RabbitMQ:UserName" "<rabbitmq-username>"
   dotnet user-secrets set "RabbitMQ:Password" "<rabbitmq-password>"
+  dotnet user-secrets set "Caching:Redis:ConnectionString" "localhost:6379,abortConnect=false"
   ```
 
 - NB: BUILD RABBITMQ ONLY (DURING TESTING FOR DEVELOPMENT ONLY):*
@@ -40,6 +41,7 @@
   dotnet user-secrets set "RabbitMQ:HostName" "<rabbitmq-host>"
   dotnet user-secrets set "RabbitMQ:UserName" "<rabbitmq-username>"
   dotnet user-secrets set "RabbitMQ:Password" "<rabbitmq-password>"
+  dotnet user-secrets set "Caching:Redis:ConnectionString" "localhost:6379,abortConnect=false"
   ```
 - Run the worker:
   ```bash
@@ -57,6 +59,8 @@
   # edit .env and set POSTGRES_PASSWORD and API_CONNECTION_STRING as needed
   ```
 - Set `ALLOWED_ORIGINS` in `.env` using a semicolon-separated list (e.g. `http://localhost:3000;https://app.example.com`). The API reads `Cors:AllowedOrigins` from that environment variable when running in Docker.
+- To enable distributed caching with Redis, set the connection string (example uses local Redis):
+  - `Caching__Redis__ConnectionString=localhost:6379,abortConnect=false`
 - Build and run the stack (API + Postgres):
   ```bash
   docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up --build
