@@ -25,6 +25,7 @@ public class GetTasksWithPaginationHandler(
     IMapper mapper,
     IMemoryCache cache,
     IOptions<TaskCachingOptions> cacheOptions,
+    IRedisCacheService redisCache,
     ILogger<GetTasksWithPaginationHandler> logger) : IRequestHandler<GetTaskWithQuery, PaginatedList<TaskDto>>
 {
     public async Task<PaginatedList<TaskDto>> Handle(GetTaskWithQuery request, CancellationToken cancellationToken)
@@ -46,12 +47,25 @@ public class GetTasksWithPaginationHandler(
             }
             return cached;
         }
+        
+        var cachedData = await redisCache.GetAsync<PaginatedList<TaskDto>>(cacheKey, cancellationToken);
+        if(cachedData is not null)
+        {
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                logger.LogDebug("Tasks Redis cache hit for {CacheKey}", cacheKey);
+            }
+
+            return cachedData;
+        }
+        
         if (logger.IsEnabled(LogLevel.Debug))
         {
             logger.LogDebug("Tasks cache miss for {CacheKey}", cacheKey);
         }
         var result = await FetchTasksAsync(request, cancellationToken);
         cache.Set(cacheKey, result, TimeSpan.FromSeconds(options.TtlSeconds));
+        await redisCache.SetAsync(cacheKey, result, TimeSpan.FromSeconds(options.TtlSeconds), cancellationToken);
         return result;
     }
 

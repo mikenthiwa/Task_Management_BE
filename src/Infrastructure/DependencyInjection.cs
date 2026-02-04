@@ -9,6 +9,7 @@ using Infrastructure.Identity;
 using Infrastructure.JobSignal;
 using Infrastructure.Notifications;
 using Infrastructure.RabbitMq;
+using Infrastructure.Redis;
 using Infrastructure.Reports;
 using Infrastructure.Security;
 using Infrastructure.Token; 
@@ -21,6 +22,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using QuestPDF.Infrastructure;
+using StackExchange.Redis;
 
 
 namespace Infrastructure;
@@ -132,5 +134,13 @@ public static class DependencyInjection
             var port = config.GetValue<int?>("RabbitMq:Port") ?? 5672;
             return new RabbitMqMessageBus(hostName, userName, password, virtualHost, port);
         });
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var redisConnectionString = 
+                config.GetConnectionString("Caching:Redis:ConnectionString") ?? "localhost:6379";
+            return ConnectionMultiplexer.Connect(redisConnectionString);
+        });
+        services.AddScoped<IRedisCacheService, RedisCacheService>();
     }
 }

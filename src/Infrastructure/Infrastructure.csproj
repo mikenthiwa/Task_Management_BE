@@ -19,6 +19,7 @@
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
       <PackageReference Include="QuestPDF" />
       <PackageReference Include="RabbitMQ.Client" />
+      <PackageReference Include="StackExchange.Redis" />
     </ItemGroup>
 
     <ItemGroup>
