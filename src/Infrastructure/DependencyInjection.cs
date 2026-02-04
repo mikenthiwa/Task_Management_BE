@@ -139,8 +139,7 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            var redisConnectionString = 
-                config.GetConnectionString("Caching:Redis:ConnectionString") ?? "localhost:6379";
+            var redisConnectionString = config["Caching:Redis:ConnectionString"] ?? "localhost:6379"; 
             return ConnectionMultiplexer.Connect(redisConnectionString);
         });
         services.AddScoped<IRedisCacheService, RedisCacheService>();

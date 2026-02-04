@@ -22,6 +22,8 @@ services:
       RabbitMq__HostName: rabbitmq
       RabbitMq__UserName: ${DEV_RABBITMQ_DEFAULT_USER}
       RabbitMq__Password: ${DEV_RABBITMQ_DEFAULT_PASS}
+      Caching__Redis__ConnectionString: ${DEV_REDIS_CONNECTION_STRING}
+      
     ports:
       - "8080:8080"
   notification-worker:
@@ -51,3 +53,5 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+      
+    
