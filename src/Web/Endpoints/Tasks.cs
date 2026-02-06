@@ -25,10 +25,10 @@ public class Tasks : EndpointGroupBase
             .MapPatch(UpdateTaskStatus, "{taskId:guid}/status");
     }
     
-    private async Task<Results<Ok<Result>, BadRequest>> CreateTask(ISender sender, CreateTaskCommand command)
+    private async Task<Results<Created<Result>, BadRequest>> CreateTask(ISender sender, CreateTaskCommand command)
     {
-        await sender.Send(command);
-        return TypedResults.Ok(Result.SuccessResponse(201, "Task created successfully"));
+        var taskId = await sender.Send(command);
+        return TypedResults.Created($"/api/tasks/{taskId}", Result.SuccessResponse(201, "Task created successfully"));
     }
 
     private async Task<Results<Ok<Result<PaginatedList<TaskDto>>>, BadRequest>> GetTasks(

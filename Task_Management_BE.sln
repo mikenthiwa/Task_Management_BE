@@ -31,6 +31,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "src\Web\Web.csproj",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationWorker", "src\NotificationWorker\NotificationWorker.csproj", "{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{17237F5C-AD5B-4F94-8C9A-E14FB48D0986}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application.FunctionalTests", "tests\Application.FunctionalTests\Application.FunctionalTests.csproj", "{14FEE755-F732-4A75-8CF6-A45F7B5AD1E5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +46,7 @@ Global
 		{2C732661-6B6F-4C6B-8660-51D19D52D05E} = {AB1183FE-D159-47DA-97F2-4E5947C9B67F}
 		{6F63FFD4-6A11-46C7-B27D-860BFE411A02} = {AB1183FE-D159-47DA-97F2-4E5947C9B67F}
 		{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21} = {AB1183FE-D159-47DA-97F2-4E5947C9B67F}
+		{14FEE755-F732-4A75-8CF6-A45F7B5AD1E5} = {17237F5C-AD5B-4F94-8C9A-E14FB48D0986}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{860072B0-5297-487F-9306-891CB6511AF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -64,5 +69,9 @@ Global
 		{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BFDE9B78-A96A-4DFD-8274-32DD99BE3C21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14FEE755-F732-4A75-8CF6-A45F7B5AD1E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14FEE755-F732-4A75-8CF6-A45F7B5AD1E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14FEE755-F732-4A75-8CF6-A45F7B5AD1E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14FEE755-F732-4A75-8CF6-A45F7B5AD1E5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
