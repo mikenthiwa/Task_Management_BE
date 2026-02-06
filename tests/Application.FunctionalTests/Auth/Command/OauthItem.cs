@@ -6,7 +6,7 @@ using FluentAssertions;
 
 namespace Application.FunctionalTests.Auth.Command;
 
-public class OauthItemTest(CustomWebApplicationFactory factory) : BaseFunctionalTest(factory)
+public class OauthTest(CustomWebApplicationFactory factory) : BaseFunctionalTest(factory)
 {
     [Fact]
     public async Task ShouldRequireEmail()
