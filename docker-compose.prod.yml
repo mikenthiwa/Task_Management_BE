@@ -1,7 +1,9 @@
 services:
   api:
     image: taskmanagementregistry.azurecr.io/task-management-api:prod
-    build: .
+    build:
+      context: .
+      target: web
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080

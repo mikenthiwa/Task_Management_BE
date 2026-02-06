@@ -15,7 +15,52 @@
   dotnet user-secrets set "Cloudinary:CloudName" "<cloud_name>"
   dotnet user-secrets set "Cloudinary:ApiKey" "<api_key>"
   dotnet user-secrets set "Cloudinary:ApiSecret" "<api_secret>"
+  dotnet user-secrets set "WorkerApiKey" "<shared-worker-key>"
+  dotnet user-secrets set "RabbitMQ:HostName" "<rabbitmq-host>"
+  dotnet user-secrets set "RabbitMQ:UserName" "<rabbitmq-username>"
+  dotnet user-secrets set "RabbitMQ:Password" "<rabbitmq-password>"
+  dotnet user-secrets set "Caching:Redis:ConnectionString" "localhost:6379,abortConnect=false"
   ```
+
+- NB: BUILD RABBITMQ ONLY (DURING TESTING FOR DEVELOPMENT ONLY):*
+  ```bash
+  docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up -d rabbitmq
+    ```
+
+## Tests
+- Run all tests:
+  ```bash
+  dotnet test
+  ```
+- Run functional tests only:
+  ```bash
+  dotnet test tests/Application.FunctionalTests/Application.FunctionalTests.csproj
+  ```
+
+## Notification Worker (SignalR publishing via web API)
+- The worker publishes notifications by calling the web API endpoint `POST /api/NotificationsInternal/internal/notifications`.
+- Configure these settings for both the web app and the worker:
+  - `WorkerApiKey`: shared secret sent in the `X-Worker-Key` header.
+  - `WebBaseUrl`: base URL for the web app (worker only), e.g. `http://localhost:5000/`.
+- Example worker user secrets:
+  ```bash
+  cd src/NotificationWorker
+  dotnet user-secrets init
+  dotnet user-secrets set "WebBaseUrl" "http://localhost:5230/"
+  dotnet user-secrets set "WorkerApiKey" "<shared-worker-key>"
+  dotnet user-secrets set "RabbitMQ:HostName" "<rabbitmq-host>"
+  dotnet user-secrets set "RabbitMQ:UserName" "<rabbitmq-username>"
+  dotnet user-secrets set "RabbitMQ:Password" "<rabbitmq-password>"
+  dotnet user-secrets set "Caching:Redis:ConnectionString" "localhost:6379,abortConnect=false"
+  ```
+- Run the worker:
+  ```bash
+  dotnet run --project src/NotificationWorker
+  ```
+- RabbitMQ settings for the worker (optional; defaults to `localhost/admin/admin`):
+  - `RabbitMq:HostName`
+  - `RabbitMq:UserName`
+  - `RabbitMq:Password`
 
 ## Docker
 - Copy the sample environment file and update the secrets:
@@ -24,6 +69,8 @@
   # edit .env and set POSTGRES_PASSWORD and API_CONNECTION_STRING as needed
   ```
 - Set `ALLOWED_ORIGINS` in `.env` using a semicolon-separated list (e.g. `http://localhost:3000;https://app.example.com`). The API reads `Cors:AllowedOrigins` from that environment variable when running in Docker.
+- To enable distributed caching with Redis, set the connection string (example uses local Redis):
+  - `Caching__Redis__ConnectionString=localhost:6379,abortConnect=false`
 - Build and run the stack (API + Postgres):
   ```bash
   docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -54,15 +101,13 @@
   az login
   az acr login -n <registry-name>
   ```
-- Build and tag the Docker image using the registry login server (publish as 64-bit Linux for Azure):
+- Build, tag, and push the Docker image using the registry login server (publish as 64-bit Linux for Azure):
   ```bash
-  docker buildx build --platform linux/amd64 \
-    -t <registry-name>.azurecr.io/task-management-be:<environment> .
+  docker buildx build --platform linux/amd64 -t <registry-name>.azurecr.io/task-management-worker:<tag> --target worker --push .
+  
+  docker buildx build --platform linux/amd64 -t taskmanagementregistry.azurecr.io/task-management-api:dev --target web --push .
   ```
-- Push the image to Azure Container Registry:
-  ```bash
-  docker push <registry-name>.azurecr.io/task-management-be:latest
-  ```
+
 - Configure your hosting target (App Service, Container Apps, or Container Instances) to pull that image and supply required settings via environment variables:
   - `ASPNETCORE_ENVIRONMENT=Production`
   - `ConnectionStrings__DefaultConnection=<azure-postgres-connection-string>`

@@ -4,11 +4,11 @@ using Domain.Enum;
 
 using Task = Domain.Entities.Task;
 
-namespace Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+namespace Application.Features.Tasks.Queries.GetTasksWithPagination;
 
 public class TaskDto
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string? Title { get; init; }
     public string? Description { get; init; }
     public Status Status { get; init; }

@@ -11,6 +11,7 @@
       <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
       <PackageReference Include="MediatR" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" />
+      <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
       <PackageReference Include="Microsoft.Extensions.Hosting" />
       <PackageReference Include="SharpGrip.FluentValidation.AutoValidation.Endpoints" />
     </ItemGroup>

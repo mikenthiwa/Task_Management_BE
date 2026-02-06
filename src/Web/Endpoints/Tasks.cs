@@ -1,9 +1,8 @@
 using Application.Common.Models;
 using Application.Features.Tasks.Command.AssignTask;
 using Application.Features.Tasks.Command.CreateTask;
-using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
-using Application.Features.Tasks.Command.UpdateTaskStatus;
 using Application.Features.Tasks.Queries.GetTasksWithPagination;
+using Application.Features.Tasks.Command.UpdateTaskStatus;
 using Application.Models;
 using Domain.Enum;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -22,14 +21,14 @@ public class Tasks : EndpointGroupBase
             .AddFluentValidationAutoValidation()
             .MapGet(GetTasks)
             .MapPost(CreateTask)
-            .MapPost(AssignTask, "{taskId:int}/assign")
-            .MapPatch(UpdateTaskStatus, "{taskId:int}/status");
+            .MapPost(AssignTask, "{taskId:guid}/assign")
+            .MapPatch(UpdateTaskStatus, "{taskId:guid}/status");
     }
     
-    private async Task<Results<Ok<Result>, BadRequest>> CreateTask(ISender sender, CreateTaskCommand command)
+    private async Task<Results<Created<Result>, BadRequest>> CreateTask(ISender sender, CreateTaskCommand command)
     {
-        var id = await sender.Send(command);
-        return TypedResults.Ok(Result.SuccessResponse(201, "Task created successfully"));
+        var taskId = await sender.Send(command);
+        return TypedResults.Created($"/api/tasks/{taskId}", Result.SuccessResponse(201, "Task created successfully"));
     }
 
     private async Task<Results<Ok<Result<PaginatedList<TaskDto>>>, BadRequest>> GetTasks(
@@ -40,13 +39,13 @@ public class Tasks : EndpointGroupBase
         [FromQuery(Name = "PageSize")] int? pageSize
         )
     {
-        var query = new GetTaskWithQuery() { Status = status, AssigneeId = assignedId, PageNumber = pageNumber ?? 1, PageSize = pageSize ?? 10 };
+        var query = new GetTaskWithQuery { Status = status, AssigneeId = assignedId, PageNumber = pageNumber ?? 1, PageSize = pageSize ?? 10 };
         var result = await sender.Send(query);
         return TypedResults.Ok(Result<PaginatedList<TaskDto>>.SuccessResponse(200, "Tasks retrieved successfully", result));
     }
 
     private async Task<Results<Ok<Result>, BadRequest>> AssignTask(
-        [FromRoute] int taskId,
+        [FromRoute] Guid taskId,
         ISender sender,
         [FromBody] AssignTaskCommand command
     )
@@ -57,7 +56,7 @@ public class Tasks : EndpointGroupBase
     }
 
     private async Task<Results<Ok<Result>, BadRequest>> UpdateTaskStatus(
-        [FromRoute] int taskId,
+        [FromRoute] Guid taskId,
         ISender sender,
         [FromBody] UpdateTaskStatusCommand command
     )

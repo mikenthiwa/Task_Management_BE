@@ -3,10 +3,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
     ports:
       - "8080:8080"
     restart: unless-stopped
-
+  notification-worker:
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      api:
+        condition: service_started
   postgres:
     image: postgres:15-alpine
     healthcheck:
@@ -17,6 +24,22 @@ services:
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    
+  rabbitmq:
+    image: rabbitmq:4.2.2-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+  
+  redis:
+    image: redis:8.4-alpine
+    container_name: redis
+    restart: unless-stopped
+    volumes: 
+      - redis_data:/var/lib/redis
 
 volumes:
   postgres_data:
+  rabbitmq_data:
+  redis_data:

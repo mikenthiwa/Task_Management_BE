@@ -12,7 +12,8 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
     private readonly Dictionary<Type, Func<HttpContext, Exception, Task>> _exceptionHandlers = new()
     {
         { typeof(ValidationException), HandleValidationException },
-        { typeof(NotFoundException), HandleNotFoundException },
+        { typeof(Ardalis.GuardClauses.NotFoundException), HandleNotFoundException },
+        { typeof(KeyNotFoundException), HandleNotFoundException },
         { typeof(UnauthorizedAccessException), HandleUnauthorizedAccessException },
         { typeof(ForbiddenAccessException), HandleForbiddenAccessException },
     };
@@ -42,7 +43,6 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
 
     private static async Task HandleNotFoundException(HttpContext httpContext, Exception ex)
     {
-        var exception = (KeyNotFoundException)ex;
         httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
 
         await httpContext.Response.WriteAsJsonAsync(new ProblemDetails()
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
             Status = StatusCodes.Status404NotFound,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.4",
             Title = "The specified resource was not found.",
-            Detail = exception.Message
+            Detail = ex.Message
         });
     }
 

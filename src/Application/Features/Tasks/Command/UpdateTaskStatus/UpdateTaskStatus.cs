@@ -1,17 +1,21 @@
 using Application.Common.Interfaces;
-using Application.Features.Tasks.Command.Queries.GetTasksWithPagination;
+using Application.Common.Options;
+using Application.Features.Tasks.Caching;
+using Application.Features.Tasks.Queries.GetTasksWithPagination;
 using Ardalis.GuardClauses;
 using AutoMapper.QueryableExtensions;
 using Domain.Enum;
 using Domain.Events;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace Application.Features.Tasks.Command.UpdateTaskStatus;
 
 public record UpdateTaskStatusCommand : IRequest
 {
-    [FromRoute] public int TaskId { get; set; }
+    [FromRoute] public Guid TaskId { get; set; }
     public required Status Status { get; init; }
 }
 
@@ -19,7 +23,9 @@ public class UpdateTaskStatusCommandHandler(
     IApplicationDbContext applicationDb,
     IMapper mapper,
     ICurrentUserService currentUserService,
-    INotificationPublisherService notificationPublisherService) : IRequestHandler<UpdateTaskStatusCommand>
+    INotificationPublisherService notificationPublisherService,
+    IMemoryCache cache,
+    IOptions<TaskCachingOptions> cacheOptions) : IRequestHandler<UpdateTaskStatusCommand>
 {
     public async Task Handle(UpdateTaskStatusCommand request, CancellationToken cancellationToken)
     {
@@ -37,6 +43,10 @@ public class UpdateTaskStatusCommandHandler(
         entity.AddDomainEvent(new TaskStatusUpdatedEvent(entity.Id, entity.Title, oldStatus, request.Status, currentUserService.UserId!));
 
         await applicationDb.SaveChangesAsync(cancellationToken);
+        if (cacheOptions.Value.Enabled)
+        {
+            TaskCacheKey.BumpVersion(cache);
+        }
 
         var taskDto = await applicationDb.Tasks
             .AsNoTracking()

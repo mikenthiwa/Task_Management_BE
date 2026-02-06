@@ -1,1 +1,1 @@
-using Domain.Entities;
+global using System.Text;
