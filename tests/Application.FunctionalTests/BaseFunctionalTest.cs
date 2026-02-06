@@ -8,39 +8,46 @@ namespace Application.FunctionalTests;
 
 public class BaseFunctionalTest : IClassFixture<CustomWebApplicationFactory>
 {
+    protected CustomWebApplicationFactory Factory { get; }
     protected HttpClient HttpClient { get; }
 
     protected BaseFunctionalTest(CustomWebApplicationFactory factory)
     {
+        Factory = factory;
         HttpClient = factory.CreateClient();
+        EnsureUserAsync(
+                "test-user-id",
+                "test-user",
+                "test-user@example.com",
+                "https://example.com/test-user.png")
+            .GetAwaiter()
+            .GetResult();
+    }
 
-        using var scope = factory.Services.CreateScope();
+    protected async System.Threading.Tasks.Task EnsureUserAsync(string userId, string userName, string email, string picture)
+    {
+        using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        const string userId = "test-user-id";
         if (!dbContext.Users.Any(u => u.Id == userId))
         {
             var appUser = new ApplicationUser
             {
                 Id = userId,
-                UserName = "test-user",
-                Email = "test-user@example.com",
-                Picture = "https://example.com/test-user.png",
-                NormalizedUserName = "TEST-USER",
-                NormalizedEmail = "TEST-USER@EXAMPLE.COM"
+                UserName = userName,
+                Email = email,
+                Picture = picture,
+                NormalizedUserName = userName.ToUpperInvariant(),
+                NormalizedEmail = email.ToUpperInvariant()
             };
-            userManager.CreateAsync(appUser).GetAwaiter().GetResult();
+            await userManager.CreateAsync(appUser);
         }
 
         if (!dbContext.DomainUsers.Any(u => u.Id == userId))
         {
-            dbContext.DomainUsers.Add(new DomainUser(
-                userId,
-                "test-user",
-                "test-user@example.com",
-                "https://example.com/test-user.png"));
-            dbContext.SaveChanges();
+            dbContext.DomainUsers.Add(new DomainUser(userId, userName, email, picture));
+            await dbContext.SaveChangesAsync();
         }
     }
 }
