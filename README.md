@@ -27,6 +27,16 @@
   docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up -d rabbitmq
     ```
 
+## Tests
+- Run all tests:
+  ```bash
+  dotnet test
+  ```
+- Run functional tests only:
+  ```bash
+  dotnet test tests/Application.FunctionalTests/Application.FunctionalTests.csproj
+  ```
+
 ## Notification Worker (SignalR publishing via web API)
 - The worker publishes notifications by calling the web API endpoint `POST /api/NotificationsInternal/internal/notifications`.
 - Configure these settings for both the web app and the worker:
