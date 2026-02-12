@@ -26,6 +26,7 @@ public class TaskConfiguration : IEntityTypeConfiguration<Task>
         
         builder.HasIndex(t => t.AssigneeId);
         builder.HasIndex(t => t.CreatorId);
+        builder.HasIndex(t => t.CreatedAt);
         builder.HasIndex(t => new { t.Status, t.Priority });
     }
 }
