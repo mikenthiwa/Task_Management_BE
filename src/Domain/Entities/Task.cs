@@ -1,5 +1,6 @@
 using Domain.Common;
 using Domain.Enum;
+using NpgsqlTypes;
 
 namespace Domain.Entities;
 
@@ -13,6 +14,8 @@ public class Task : BaseAuditableEntity
 
     public string? AssigneeId { get; set; }
     public string? CreatorId { get; set; }
+
+    public NpgsqlTsVector SearchVector { get; private set; } = default!;
     
     public DomainUser? Assignee { get; set; }
     public DomainUser? Creator { get; set; }

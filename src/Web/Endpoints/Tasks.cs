@@ -2,6 +2,7 @@ using Application.Common.Models;
 using Application.Features.Tasks.Command.AssignTask;
 using Application.Features.Tasks.Command.CreateTask;
 using Application.Features.Tasks.Queries.GetTasksWithPagination;
+using Application.Features.Tasks.Queries.SearchTasks;
 using Application.Features.Tasks.Command.UpdateTaskStatus;
 using Application.Models;
 using Domain.Enum;
@@ -20,6 +21,7 @@ public class Tasks : EndpointGroupBase
             .RequireAuthorization()
             .AddFluentValidationAutoValidation()
             .MapGet(GetTasks)
+            .MapGet(SearchTasks, "search")
             .MapPost(CreateTask)
             .MapPost(AssignTask, "{taskId:guid}/assign")
             .MapPatch(UpdateTaskStatus, "{taskId:guid}/status");
@@ -41,6 +43,31 @@ public class Tasks : EndpointGroupBase
     {
         var query = new GetTaskWithQuery { Status = status, AssigneeId = assignedId, PageNumber = pageNumber ?? 1, PageSize = pageSize ?? 10 };
         var result = await sender.Send(query);
+        return TypedResults.Ok(Result<PaginatedList<TaskDto>>.SuccessResponse(200, "Tasks retrieved successfully", result));
+    }
+
+    private async Task<Results<Ok<Result<PaginatedList<TaskDto>>>, BadRequest>> SearchTasks(
+        ISender sender,
+        [FromQuery(Name = "searchTerm")] string? searchTerm,
+        [FromQuery(Name = "q")] string? q,
+        [FromQuery(Name = "PageNumber")] int? pageNumber,
+        [FromQuery(Name = "PageSize")] int? pageSize)
+    {
+        var query = q ?? searchTerm;
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return TypedResults.BadRequest();
+        }
+
+        var request = new SearchTasksQuery
+        {
+            Query = query,
+            PageNumber = pageNumber ?? 1,
+            PageSize = pageSize ?? 10
+        };
+
+        var result = await sender.Send(request);
         return TypedResults.Ok(Result<PaginatedList<TaskDto>>.SuccessResponse(200, "Tasks retrieved successfully", result));
     }
 
