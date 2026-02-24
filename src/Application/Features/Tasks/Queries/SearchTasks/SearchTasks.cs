@@ -25,9 +25,10 @@ public class SearchTasksQueryHandler(
 
         return context.Tasks
             .AsNoTracking()
-            .Where(task => task.SearchVector != null && task.SearchVector.Matches(tsQuery))
-            .OrderByDescending(task => EF.Functions.TsRank(task.SearchVector!, tsQuery))
-            .ThenByDescending(task => task.CreatedAt)
+            .Where(task => task.SearchVector.Matches(tsQuery))
+            // .OrderByDescending(task =>
+            //     EF.Functions.TsRank(task.SearchVector, tsQuery))
+            .OrderByDescending(task => task.CreatedAt)
             .ProjectTo<TaskDto>(mapper.ConfigurationProvider)
             .PaginatedListAsync(request.PageNumber, request.PageSize);
     }

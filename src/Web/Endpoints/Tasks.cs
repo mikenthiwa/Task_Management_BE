@@ -48,10 +48,13 @@ public class Tasks : EndpointGroupBase
 
     private async Task<Results<Ok<Result<PaginatedList<TaskDto>>>, BadRequest>> SearchTasks(
         ISender sender,
-        [FromQuery(Name = "searchTerm")] string? query,
+        [FromQuery(Name = "searchTerm")] string? searchTerm,
+        [FromQuery(Name = "q")] string? q,
         [FromQuery(Name = "PageNumber")] int? pageNumber,
         [FromQuery(Name = "PageSize")] int? pageSize)
     {
+        var query = q ?? searchTerm;
+
         if (string.IsNullOrWhiteSpace(query))
         {
             return TypedResults.BadRequest();
