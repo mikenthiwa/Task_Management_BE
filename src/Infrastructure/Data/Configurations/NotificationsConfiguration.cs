@@ -12,10 +12,22 @@ public class NotificationsConfiguration : IEntityTypeConfiguration<Notification>
         builder.HasKey(notification => notification.Id);
         
         builder.Property(notification => notification.UserId )
+            .HasMaxLength(450)
             .IsRequired();
 
         builder.Property(notification => notification.Message)
+            .HasMaxLength(1024)
             .IsRequired();
+
+        builder.OwnsOne(notification => notification.Action, actionBuilder =>
+        {
+            actionBuilder.Property(a => a.ActionUrl)
+                .HasMaxLength(2048)
+                .IsRequired();
+            actionBuilder.Property(a => a.ActionLabel)
+                .HasMaxLength(256)
+                .IsRequired();
+        });
 
         builder.Property(notification => notification.Type)
             .IsRequired();

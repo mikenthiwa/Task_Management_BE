@@ -12,6 +12,20 @@ public class UserConfiguration : IEntityTypeConfiguration<DomainUser>
         builder.ToTable("DomainUsers");
         builder.HasKey(u => u.Id);
 
+        builder.Property(u => u.Id)
+            .HasMaxLength(450);
+
+        builder.Property(u => u.Username)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(u => u.Email)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(u => u.Picture)
+            .HasMaxLength(2048);
+
         builder.HasOne<ApplicationUser>()
             .WithOne()
             .HasForeignKey<DomainUser>(u => u.Id)

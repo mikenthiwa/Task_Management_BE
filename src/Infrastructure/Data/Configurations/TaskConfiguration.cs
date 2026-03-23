@@ -12,6 +12,19 @@ public class TaskConfiguration : IEntityTypeConfiguration<Task>
     {
         builder.ToTable("Tasks");
 
+        builder.Property(t => t.Title)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(t => t.Description)
+            .HasMaxLength(4096);
+
+        builder.Property(t => t.AssigneeId)
+            .HasMaxLength(450);
+
+        builder.Property(t => t.CreatorId)
+            .HasMaxLength(450);
+
         builder.HasOne(task => task.Assignee)
             .WithMany(u => u.AssignedTasks)
             .HasForeignKey(t => t.AssigneeId)

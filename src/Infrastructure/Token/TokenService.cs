@@ -75,7 +75,7 @@ public class TokenService(IConfiguration configuration, UserManager<ApplicationU
         // var user = await userManager.FindByIdAsync(storedToken.UserId)
         //            ?? throw new UnauthorizedAccessException("Invalid refresh token.");
         
-        var user = await dbContext.DomainUsers.FindAsync(storedToken.UserId) ?? throw new UnauthorizedAccessException("Invalid refresh token.");;
+        var user = await dbContext.DomainUsers.FindAsync(storedToken.UserId) ?? throw new UnauthorizedAccessException("Invalid refresh token.");
 
         return await GenerateTokensAsync(user);
     }

@@ -21,13 +21,17 @@ public class SearchTasksQueryHandler(
 {
     public Task<PaginatedList<TaskDto>> Handle(SearchTasksQuery request, CancellationToken cancellationToken)
     {
-        var tsQuery = EF.Functions.WebSearchToTsQuery("english", request.Query.Trim());
+        var query = request.Query.Trim();
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return Task.FromResult(new PaginatedList<TaskDto>([], 0, request.PageNumber, request.PageSize));
+        }
 
         return context.Tasks
             .AsNoTracking()
-            .Where(task => task.SearchVector.Matches(tsQuery))
-            // .OrderByDescending(task =>
-            //     EF.Functions.TsRank(task.SearchVector, tsQuery))
+            .Where(task => task.SearchVector.Matches(
+                EF.Functions.WebSearchToTsQuery("english", query)))
             .OrderByDescending(task => task.CreatedAt)
             .ProjectTo<TaskDto>(mapper.ConfigurationProvider)
             .PaginatedListAsync(request.PageNumber, request.PageSize);

@@ -4,10 +4,7 @@ using MediatR;
 
 namespace Application.Features.Auth.Command.RefreshToken;
 
-public record RefreshTokenCommand: IRequest<TokenSetDto>
-{
-    public required string RefreshToken { get; set; }
-}
+public record RefreshTokenCommand(string RefreshToken) : IRequest<TokenSetDto>;
 
 public class RefreshToken(ITokenService tokenService) : IRequestHandler<RefreshTokenCommand, TokenSetDto>
 {
