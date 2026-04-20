@@ -1,5 +1,6 @@
 using Infrastructure.Data;
 using Infrastructure.Hubs;
+using Task_Management_BE;
 using Task_Management_BE.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);

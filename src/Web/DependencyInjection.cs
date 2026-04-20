@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSwag;
 using Web.Infrastructure;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace Task_Management_BE;
 
 public static class DependencyInjection
 {

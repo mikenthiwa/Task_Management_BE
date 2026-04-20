@@ -17,7 +17,7 @@ public class Tasks : EndpointGroupBase
     public override void Map(WebApplication app)
     {
         app.MapGroup(this)
-            .RequireAuthorization()
+            // .RequireAuthorization()
             .AddFluentValidationAutoValidation()
             .MapGet(GetTasks)
             .MapPost(CreateTask)
@@ -36,10 +36,11 @@ public class Tasks : EndpointGroupBase
         [FromQuery(Name = "status")] Status? status,
         [FromQuery(Name = "AssigneeId")] string? assignedId,
         [FromQuery(Name = "PageNumber")] int? pageNumber,
-        [FromQuery(Name = "PageSize")] int? pageSize
+        [FromQuery(Name = "PageSize")] int? pageSize,
+        [FromQuery(Name = "SearchTerm")] string? searchTerm
         )
     {
-        var query = new GetTaskWithQuery { Status = status, AssigneeId = assignedId, PageNumber = pageNumber ?? 1, PageSize = pageSize ?? 10 };
+        var query = new GetTaskWithQuery { Status = status, AssigneeId = assignedId, PageNumber = pageNumber ?? 1, PageSize = pageSize ?? 10, SearchTerm = searchTerm};
         var result = await sender.Send(query);
         return TypedResults.Ok(Result<PaginatedList<TaskDto>>.SuccessResponse(200, "Tasks retrieved successfully", result));
     }
