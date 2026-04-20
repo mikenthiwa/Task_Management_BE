@@ -11,7 +11,7 @@ public static class TaskCacheKey
     {
         var statusPart = request.Status?.ToString() ?? "any";
         var assigneePart = string.IsNullOrWhiteSpace(request.AssigneeId) ? "any" : request.AssigneeId.Trim();
-        return $"tasks:list:v{version}:status={statusPart}:assignee={assigneePart}:page={request.PageNumber}:size={request.PageSize}";
+        return $"tasks:list:v{version}:status={statusPart}:assignee={assigneePart}:page={request.PageNumber}:size={request.PageSize}:searchTerm={request.SearchTerm}";
     }
 
     public static int GetVersion(IMemoryCache cache)
