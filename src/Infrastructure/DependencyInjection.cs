@@ -1,5 +1,6 @@
 using Application.Common.Interfaces;
 using Application.Common.Options;
+using Ardalis.GuardClauses;
 using CloudinaryDotNet;
 using Domain.Constants;
 using Infrastructure.BackgroundWorker;
@@ -33,7 +34,7 @@ public static class DependencyInjection
     public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-                               ?? throw new InvalidOperationException("Connection string 'TodoDb' not found.");
+                               ?? throw new InvalidOperationException("Connection string not found.");
         
         QuestPDF.Settings.License = LicenseType.Community;
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
@@ -139,7 +140,10 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            var redisConnectionString = config["Caching:Redis:ConnectionString"] ?? "localhost:6379"; 
+            var redisConnectionString = Guard.Against.NullOrWhiteSpace(
+                config["Caching:Redis:ConnectionString"],
+                "Redis connection string is not configured.");
+
             return ConnectionMultiplexer.Connect(redisConnectionString);
         });
         services.AddScoped<IRedisCacheService, RedisCacheService>();
