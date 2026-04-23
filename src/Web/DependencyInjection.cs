@@ -1,8 +1,10 @@
 using System.Text.Json.Serialization;
- using Application.Common.Options;
+using Application.Common.Options;
 using Ardalis.GuardClauses;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NSwag;
+using Task_Management_BE.HealthChecks;
 using Web.Infrastructure;
 
 namespace Task_Management_BE;
@@ -54,6 +56,10 @@ public static class DependencyInjection
             });
             
         });
-        services.AddHealthChecks().AddNpgSql(connectionString).AddRedis(redisConnectionString);
+        services.AddHealthChecks()
+            .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live", "ready"])
+            .AddNpgSql(connectionString, name: "postgresql", tags: ["ready"])
+            .AddRedis(redisConnectionString, name: "redis", tags: ["ready"])
+            .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: ["ready"]);
     }
 }
