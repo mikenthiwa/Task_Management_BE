@@ -17,7 +17,7 @@ public class Tasks : EndpointGroupBase
     public override void Map(WebApplication app)
     {
         app.MapGroup(this)
-            // .RequireAuthorization()
+            .RequireAuthorization()
             .AddFluentValidationAutoValidation()
             .MapGet(GetTasks)
             .MapPost(CreateTask)
