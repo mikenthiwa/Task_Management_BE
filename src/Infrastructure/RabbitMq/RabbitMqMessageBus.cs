@@ -6,6 +6,10 @@ namespace Infrastructure.RabbitMq;
 
 public sealed class RabbitMqMessageBus : IMessageBus, IDisposable
 {
+    private const string TaskEventsExchange = "task.events";
+    private const string NotificationQueue = "notification.task.events";
+    private const string TaskEventsRoutingPattern = "task.*";
+
     private readonly Task<IChannel> _channel;
     
     public RabbitMqMessageBus(string hostName, string userName, string password, string virtualHost, int port, bool useSsl) {
@@ -24,7 +28,7 @@ public sealed class RabbitMqMessageBus : IMessageBus, IDisposable
         }
         var connection = factory.CreateConnectionAsync();
         _channel = connection.Result.CreateChannelAsync(channelOpt);
-        _channel.Result.ExchangeDeclareAsync(exchange: "task.events", type: ExchangeType.Topic, durable: true);
+        DeclareTopology();
     }
 
     public async Task PublishAsync<T>(T message, string exchange, string routingKey, CancellationToken cancellationToken = default)
@@ -38,5 +42,26 @@ public sealed class RabbitMqMessageBus : IMessageBus, IDisposable
     {
         _channel.Result.CloseAsync();
         _channel.Result.Dispose();
+    }
+
+    private void DeclareTopology()
+    {
+        IChannel channel = _channel.Result;
+
+        channel.ExchangeDeclareAsync(
+            exchange: TaskEventsExchange,
+            type: ExchangeType.Topic,
+            durable: true).GetAwaiter().GetResult();
+
+        channel.QueueDeclareAsync(
+            queue: NotificationQueue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false).GetAwaiter().GetResult();
+
+        channel.QueueBindAsync(
+            queue: NotificationQueue,
+            exchange: TaskEventsExchange,
+            routingKey: TaskEventsRoutingPattern).GetAwaiter().GetResult();
     }
 }
