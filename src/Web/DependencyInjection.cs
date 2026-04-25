@@ -59,7 +59,7 @@ public static class DependencyInjection
         services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live", "ready"])
             .AddNpgSql(connectionString, name: "postgresql", tags: ["ready"])
-            .AddRedis(redisConnectionString, name: "redis", tags: ["ready"])
+            .AddCheck<RedisHealthCheck>("redis", tags: ["ready"])
             .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: ["ready"]);
     }
 }

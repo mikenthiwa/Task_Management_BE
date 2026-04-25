@@ -12,6 +12,7 @@ COPY ["src/Domain/Domain.csproj", "src/Domain/"]
 COPY ["src/Infrastructure/Infrastructure.csproj", "src/Infrastructure/"]
 COPY ["src/Web/Web.csproj", "src/Web/"]
 COPY ["src/NotificationWorker/NotificationWorker.csproj", "src/NotificationWorker/"]
+COPY ["tests/Application.FunctionalTests/Application.FunctionalTests.csproj", "tests/Application.FunctionalTests/"]
 
 RUN --mount=type=cache,id=nuget-cache,target=/root/.nuget/packages \
     dotnet restore Task_Management_BE.sln
@@ -40,15 +41,16 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS web
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 EXPOSE 8080
-ENV ASPNETCORE_URLS=http://+:8080 \
-    ASPNETCORE_ENVIRONMENT=Development
+ENV ASPNETCORE_ENVIRONMENT=Production
 COPY --from=publish-web /app/publish .
 USER appuser
-ENTRYPOINT ["dotnet", "Task_Management_BE.dll"]
+CMD ["sh", "-c", "exec dotnet Task_Management_BE.dll --urls http://+:${PORT:-8080}"]
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS worker
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=publish-worker /app/publish .
 USER appuser
-ENTRYPOINT ["dotnet", "NotificationWorker.dll"]
+CMD ["dotnet", "NotificationWorker.dll"]
+
+FROM web AS final

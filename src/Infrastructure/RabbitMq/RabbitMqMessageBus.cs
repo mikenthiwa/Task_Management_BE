@@ -8,12 +8,20 @@ public sealed class RabbitMqMessageBus : IMessageBus, IDisposable
 {
     private readonly Task<IChannel> _channel;
     
-    public RabbitMqMessageBus(string hostName, string userName, string password, string virtualHost, int port) {
+    public RabbitMqMessageBus(string hostName, string userName, string password, string virtualHost, int port, bool useSsl) {
         var channelOpt = new CreateChannelOptions(
             publisherConfirmationsEnabled: true,
             publisherConfirmationTrackingEnabled: true
             );
         var factory = new ConnectionFactory { HostName = hostName, UserName = userName, Password = password, VirtualHost = virtualHost, Port = port };
+        if (useSsl)
+        {
+            factory.Ssl = new SslOption
+            {
+                Enabled = true,
+                ServerName = hostName
+            };
+        }
         var connection = factory.CreateConnectionAsync();
         _channel = connection.Result.CreateChannelAsync(channelOpt);
         _channel.Result.ExchangeDeclareAsync(exchange: "task.events", type: ExchangeType.Topic, durable: true);

@@ -12,27 +12,48 @@ namespace Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<Guid>(
+            migrationBuilder.DropPrimaryKey(
+                name: "PK_Tasks",
+                table: "Tasks");
+
+            migrationBuilder.DropColumn(
+                name: "Id",
+                table: "Tasks");
+
+            migrationBuilder.AddColumn<Guid>(
                 name: "Id",
                 table: "Tasks",
                 type: "uuid",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer")
-                .OldAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                nullable: false);
+
+            migrationBuilder.AddPrimaryKey(
+                name: "PK_Tasks",
+                table: "Tasks",
+                column: "Id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<int>(
+            migrationBuilder.DropPrimaryKey(
+                name: "PK_Tasks",
+                table: "Tasks");
+
+            migrationBuilder.DropColumn(
+                name: "Id",
+                table: "Tasks");
+
+            migrationBuilder.AddColumn<int>(
                 name: "Id",
                 table: "Tasks",
                 type: "integer",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid")
+                nullable: false)
                 .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+            migrationBuilder.AddPrimaryKey(
+                name: "PK_Tasks",
+                table: "Tasks",
+                column: "Id");
         }
     }
 }

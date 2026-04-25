@@ -7,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 var runningInContainer = builder.Configuration.GetValue("DOTNET_RUNNING_IN_CONTAINER", false);
 
+builder.Configuration.AddHerokuAddonConfiguration();
+
 if (builder.Environment.IsDevelopment() && !runningInContainer)
 {
     builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
