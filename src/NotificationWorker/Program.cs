@@ -9,7 +9,7 @@ var assembly = Assembly.GetExecutingAssembly();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
-builder.Services.AddAutoMapper(assembly);
+builder.Services.AddAutoMapper(_ => { }, assembly);
 builder.Services.AddHttpClient("web", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["WebBaseUrl"]!);
