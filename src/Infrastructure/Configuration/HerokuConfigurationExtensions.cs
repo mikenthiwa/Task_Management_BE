@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 
-namespace Task_Management_BE.Infrastructure;
+namespace Infrastructure.Configuration;
 
 public static class HerokuConfigurationExtensions
 {
@@ -25,7 +25,7 @@ public static class HerokuConfigurationExtensions
         var databaseUrl = configuration["DATABASE_URL"];
         var currentConnectionString = configuration.GetConnectionString("DefaultConnection");
 
-        if (string.IsNullOrWhiteSpace(databaseUrl) || IsNpgsqlConnectionString(currentConnectionString))
+        if (string.IsNullOrWhiteSpace(databaseUrl) || IsStructuredConnectionString(currentConnectionString))
         {
             return;
         }
@@ -45,7 +45,7 @@ public static class HerokuConfigurationExtensions
         var redisUrl = configuration["REDIS_URL"];
         var currentConnectionString = configuration["Caching:Redis:ConnectionString"];
 
-        if (string.IsNullOrWhiteSpace(redisUrl) || !IsUrlConnectionString(currentConnectionString))
+        if (string.IsNullOrWhiteSpace(redisUrl) || IsStructuredConnectionString(currentConnectionString))
         {
             return;
         }
@@ -64,7 +64,7 @@ public static class HerokuConfigurationExtensions
     {
         var cloudAmqpUrl = configuration["CLOUDAMQP_URL"];
 
-        if (string.IsNullOrWhiteSpace(cloudAmqpUrl) || !string.IsNullOrWhiteSpace(configuration["RabbitMq:HostName"]))
+        if (string.IsNullOrWhiteSpace(cloudAmqpUrl) || HasStructuredRabbitMqConfiguration(configuration))
         {
             return;
         }
@@ -85,10 +85,9 @@ public static class HerokuConfigurationExtensions
         values["RabbitMq:UseSsl"] = useSsl.ToString();
     }
 
-    private static bool IsNpgsqlConnectionString(string? connectionString)
+    private static bool IsStructuredConnectionString(string? connectionString)
     {
-        return !string.IsNullOrWhiteSpace(connectionString)
-               && !IsUrlConnectionString(connectionString);
+        return !string.IsNullOrWhiteSpace(connectionString) && !IsUrlConnectionString(connectionString);
     }
 
     private static bool IsUrlConnectionString(string? connectionString)
@@ -98,5 +97,14 @@ public static class HerokuConfigurationExtensions
                || connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)
                || connectionString.StartsWith("redis://", StringComparison.OrdinalIgnoreCase)
                || connectionString.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasStructuredRabbitMqConfiguration(IConfiguration configuration)
+    {
+        return !string.IsNullOrWhiteSpace(configuration["RabbitMq:HostName"])
+               && !string.IsNullOrWhiteSpace(configuration["RabbitMq:UserName"])
+               && !string.IsNullOrWhiteSpace(configuration["RabbitMq:Password"])
+               && !string.IsNullOrWhiteSpace(configuration["RabbitMq:VirtualHost"])
+               && !string.IsNullOrWhiteSpace(configuration["RabbitMq:Port"]);
     }
 }

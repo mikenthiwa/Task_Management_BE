@@ -6,7 +6,14 @@ using RabbitMQ.Client.Events;
 
 namespace NotificationWorker;
 
-public class Worker(IServiceProvider serviceProvider, string hostName, string userName, string password) : BackgroundService
+public class Worker(
+    IServiceProvider serviceProvider,
+    string hostName,
+    string userName,
+    string password,
+    string virtualHost,
+    int port,
+    bool useSsl) : BackgroundService
 {
     private const string NotificationQueue = "notification.task.events";
 
@@ -14,7 +21,23 @@ public class Worker(IServiceProvider serviceProvider, string hostName, string us
     private Task<IChannel>? _channel;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var factory = new ConnectionFactory { HostName = hostName, UserName = userName, Password = password };
+        var factory = new ConnectionFactory
+        {
+            HostName = hostName,
+            UserName = userName,
+            Password = password,
+            VirtualHost = virtualHost,
+            Port = port
+        };
+        if (useSsl)
+        {
+            factory.Ssl = new SslOption
+            {
+                Enabled = true,
+                ServerName = hostName
+            };
+        }
+
         _connection = factory.CreateConnectionAsync(cancellationToken: stoppingToken);
         _channel = _connection.Result.CreateChannelAsync(cancellationToken: stoppingToken);
 

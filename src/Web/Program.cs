@@ -1,4 +1,5 @@
 using Infrastructure.Data;
+using Infrastructure.Configuration;
 using Infrastructure.Hubs;
 using Task_Management_BE;
 using Task_Management_BE.Infrastructure;
