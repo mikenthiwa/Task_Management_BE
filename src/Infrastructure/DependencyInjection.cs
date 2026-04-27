@@ -18,6 +18,7 @@ using Infrastructure.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -110,6 +111,7 @@ public static class DependencyInjection
             {
                 options.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
+        services.AddSingleton<IUserIdProvider, NotificationUserIdProvider>();
         services.AddScoped<INotificationPublisherService, NotificationHubServices>();
         services.AddScoped<IReportService, ReportService>();
         services.AddHostedService<ReportBackgroundWorker>();
