@@ -15,23 +15,23 @@ namespace Application.FunctionalTests.TaskItems.Query;
 
 public class SearchTasksTest(CustomWebApplicationFactory factory) : BaseFunctionalTest(factory)
 {
-    // [Fact]
-    // public async Task ShouldReturnMatchingTasksByTitleOrDescription()
-    // {
-    //     await SeedTasksAsync();
-    //
-    //     var response = await HttpClient.GetAsync("/api/tasks/search?q=alpha");
-    //     response.StatusCode.Should().Be(HttpStatusCode.OK);
-    //
-    //     var result = await response.Content.ReadFromJsonAsync<Result<PaginatedList<TaskDto>>>(JsonOptions());
-    //     result.Should().NotBeNull();
-    //     result!.Success.Should().BeTrue();
-    //     result.Data.Should().NotBeNull();
-    //     result.Data!.Items.Should().NotBeEmpty();
-    //     result.Data.Items.Should().OnlyContain(item =>
-    //         (item.Title != null && item.Title.Contains("alpha", StringComparison.OrdinalIgnoreCase)) ||
-    //         (item.Description != null && item.Description.Contains("alpha", StringComparison.OrdinalIgnoreCase)));
-    // }
+    [Fact]
+    public async Task ShouldReturnMatchingTasksByTitleOrDescription()
+    {
+        await SeedTasksAsync();
+
+        var response = await HttpClient.GetAsync("/api/tasks?SearchTerm=alpha");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<Result<PaginatedList<TaskDto>>>(JsonOptions());
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Items.Should().NotBeEmpty();
+        result.Data.Items.Should().OnlyContain(item =>
+            (item.Title != null && item.Title.Contains("alpha", StringComparison.OrdinalIgnoreCase)) ||
+            (item.Description != null && item.Description.Contains("alpha", StringComparison.OrdinalIgnoreCase)));
+    }
 
     [Fact]
     public async Task ShouldReturnBadRequestWhenQueryMissing()

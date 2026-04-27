@@ -22,8 +22,8 @@ public static class TaskFilterExtensions
 
         if (!string.IsNullOrEmpty(searchTerm))
         {
-            var searchQuery = EF.Functions.WebSearchToTsQuery("english", searchTerm);
-            query = query.Where(task => task.SearchVector.Matches(searchQuery));
+            query = query.Where(task => task.SearchVector.Matches(
+                EF.Functions.WebSearchToTsQuery("english", searchTerm)));
         }
 
         return query;
