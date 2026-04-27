@@ -1,4 +1,5 @@
 using Infrastructure.Data;
+using Infrastructure.Configuration;
 using Infrastructure.Hubs;
 using Task_Management_BE;
 using Task_Management_BE.Infrastructure;
@@ -6,6 +7,8 @@ using Task_Management_BE.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 var runningInContainer = builder.Configuration.GetValue("DOTNET_RUNNING_IN_CONTAINER", false);
+
+builder.Configuration.AddHerokuAddonConfiguration();
 
 if (builder.Environment.IsDevelopment() && !runningInContainer)
 {
@@ -41,7 +44,8 @@ app.UseCors("MyAllowSpecificOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapEndpoints();
-app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<NotificationHub>("/notificationHub")
+    .RequireAuthorization();
 
 
 app.Run();

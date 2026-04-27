@@ -18,6 +18,7 @@ using Infrastructure.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -43,7 +44,9 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseNpgsql(connectionString);
+            options
+                .UseNpgsql(connectionString)
+                .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<ApplicationDbContextInitializer>();
@@ -108,6 +111,7 @@ public static class DependencyInjection
             {
                 options.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
+        services.AddSingleton<IUserIdProvider, NotificationUserIdProvider>();
         services.AddScoped<INotificationPublisherService, NotificationHubServices>();
         services.AddScoped<IReportService, ReportService>();
         services.AddHostedService<ReportBackgroundWorker>();
@@ -134,7 +138,8 @@ public static class DependencyInjection
             var password = config.GetValue<string>("RabbitMq:Password") ?? "admin";
             var virtualHost = config.GetValue<string>("RabbitMq:VirtualHost") ?? "/";
             var port = config.GetValue<int?>("RabbitMq:Port") ?? 5672;
-            return new RabbitMqMessageBus(hostName, userName, password, virtualHost, port);
+            var useSsl = config.GetValue<bool>("RabbitMq:UseSsl");
+            return new RabbitMqMessageBus(hostName, userName, password, virtualHost, port, useSsl);
         });
         services.AddMemoryCache();
         services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -143,8 +148,13 @@ public static class DependencyInjection
             var redisConnectionString = Guard.Against.NullOrWhiteSpace(
                 config["Caching:Redis:ConnectionString"],
                 "Redis connection string is not configured.");
+            var redisOptions = ConfigurationOptions.Parse(redisConnectionString);
+            if (config.GetValue<bool>("Caching:Redis:SkipCertificateValidation"))
+            {
+                redisOptions.CertificateValidation += (_, _, _, _) => true;
+            }
 
-            return ConnectionMultiplexer.Connect(redisConnectionString);
+            return ConnectionMultiplexer.Connect(redisOptions);
         });
         services.AddScoped<IRedisCacheService, RedisCacheService>();
     }

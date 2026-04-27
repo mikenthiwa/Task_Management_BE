@@ -19,6 +19,14 @@ public sealed class RabbitMqHealthCheck(IConfiguration configuration) : IHealthC
                 VirtualHost = configuration["RabbitMq:VirtualHost"] ?? "/",
                 Port = configuration.GetValue<int?>("RabbitMq:Port") ?? 5672
             };
+            if (configuration.GetValue<bool>("RabbitMq:UseSsl"))
+            {
+                factory.Ssl = new SslOption
+                {
+                    Enabled = true,
+                    ServerName = factory.HostName
+                };
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
 

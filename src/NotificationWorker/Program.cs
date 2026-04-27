@@ -1,15 +1,18 @@
 
 using System.Reflection;
 using Infrastructure;
+using Infrastructure.Configuration;
 using NotificationWorker;
 
 var builder = Host.CreateApplicationBuilder(args);
 var assembly = Assembly.GetExecutingAssembly();
 
+builder.Configuration.AddHerokuAddonConfiguration();
+
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
-builder.Services.AddAutoMapper(assembly);
+builder.Services.AddAutoMapper(_ => { }, assembly);
 builder.Services.AddHttpClient("web", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["WebBaseUrl"]!);
@@ -21,7 +24,10 @@ builder.Services.AddHostedService(sp =>
     var hostName = configuration["RabbitMq:HostName"] ?? "localhost";
     var userName = configuration["RabbitMq:UserName"] ?? "admin";
     var password = configuration["RabbitMq:Password"] ?? "admin";
-    return new Worker(sp, hostName, userName, password);
+    var virtualHost = configuration["RabbitMq:VirtualHost"] ?? "/";
+    var port = configuration.GetValue<int?>("RabbitMq:Port") ?? 5672;
+    var useSsl = configuration.GetValue<bool>("RabbitMq:UseSsl");
+    return new Worker(sp, hostName, userName, password, virtualHost, port, useSsl);
 });
 
 var host = builder.Build();
