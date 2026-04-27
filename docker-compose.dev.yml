@@ -18,6 +18,7 @@ services:
       Cloudinary__CloudName: ${DEV_CLOUDINARY_CLOUD_NAME}
       Cloudinary__ApiKey: ${DEV_CLOUDINARY_API_KEY}
       Cloudinary__ApiSecret: ${DEV_CLOUDINARY_API_SECRET}
+      Notifications__DispatchMode: RabbitMq
       WorkerApiKey: ${DEV_WORKER_API_KEY}
       RabbitMq__HostName: rabbitmq
       RabbitMq__UserName: ${DEV_RABBITMQ_DEFAULT_USER}
@@ -33,6 +34,7 @@ services:
       target: worker
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      Notifications__DispatchMode: RabbitMq
       WebBaseUrl: http://api:8080/
       WorkerApiKey: ${DEV_WORKER_API_KEY}
       RabbitMq__HostName: rabbitmq

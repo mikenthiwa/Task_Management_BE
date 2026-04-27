@@ -7,7 +7,7 @@ using MediatR;
 namespace Application.Features.Tasks.EventHandlers;
 
 public class TaskCreatedEventHandler(
-    IMessageBus messageBus
+    INotificationDispatcher notificationDispatcher
     ) : INotificationHandler<TaskCreatedEvent>
 {
     public async Task Handle(TaskCreatedEvent notification, CancellationToken cancellationToken)
@@ -19,6 +19,6 @@ public class TaskCreatedEventHandler(
             Message = $"Task '{task.Title}' has been created.",
             UserId = task.CreatorId!,
         };
-        await messageBus.PublishAsync(integrationEvent, exchange: "task.events", routingKey: "task.created", cancellationToken);
+        await notificationDispatcher.DispatchAsync(integrationEvent, routingKey: "task.created", cancellationToken);
     }
 }

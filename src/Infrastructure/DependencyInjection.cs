@@ -36,6 +36,7 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
                                ?? throw new InvalidOperationException("Connection string not found.");
+        var notificationDispatchMode = GetNotificationDispatchMode(configuration);
         
         QuestPDF.Settings.License = LicenseType.Community;
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
@@ -129,18 +130,27 @@ public static class DependencyInjection
             return cloudinary;
         });
         services.AddSingleton<IBackgroundJobSignal, BackgroundJobSignal>();
-        services.AddSingleton<IMessageBus>((sp) =>
+        if (notificationDispatchMode.Equals(NotificationDispatchModes.RabbitMq, StringComparison.OrdinalIgnoreCase))
         {
-            var config = sp.GetRequiredService<IConfiguration>();
+            services.AddSingleton<IMessageBus>((sp) =>
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
 
-            var hostName = config.GetValue<string>("RabbitMq:HostName") ?? "localhost";
-            var userName = config.GetValue<string>("RabbitMq:UserName") ?? "admin";
-            var password = config.GetValue<string>("RabbitMq:Password") ?? "admin";
-            var virtualHost = config.GetValue<string>("RabbitMq:VirtualHost") ?? "/";
-            var port = config.GetValue<int?>("RabbitMq:Port") ?? 5672;
-            var useSsl = config.GetValue<bool>("RabbitMq:UseSsl");
-            return new RabbitMqMessageBus(hostName, userName, password, virtualHost, port, useSsl);
-        });
+                var hostName = config.GetValue<string>("RabbitMq:HostName") ?? "localhost";
+                var userName = config.GetValue<string>("RabbitMq:UserName") ?? "admin";
+                var password = config.GetValue<string>("RabbitMq:Password") ?? "admin";
+                var virtualHost = config.GetValue<string>("RabbitMq:VirtualHost") ?? "/";
+                var port = config.GetValue<int?>("RabbitMq:Port") ?? 5672;
+                var useSsl = config.GetValue<bool>("RabbitMq:UseSsl");
+                return new RabbitMqMessageBus(hostName, userName, password, virtualHost, port, useSsl);
+            });
+            services.AddScoped<INotificationDispatcher, RabbitMqNotificationDispatcher>();
+        }
+        else
+        {
+            services.AddScoped<INotificationDispatcher, InProcessNotificationDispatcher>();
+        }
+
         services.AddMemoryCache();
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
@@ -157,5 +167,26 @@ public static class DependencyInjection
             return ConnectionMultiplexer.Connect(redisOptions);
         });
         services.AddScoped<IRedisCacheService, RedisCacheService>();
+    }
+
+    private static string GetNotificationDispatchMode(IConfiguration configuration)
+    {
+        var configuredMode = configuration[$"{NotificationDispatchOptions.SectionName}:DispatchMode"];
+        if (!string.IsNullOrWhiteSpace(configuredMode))
+        {
+            if (configuredMode.Equals(NotificationDispatchModes.InProcess, StringComparison.OrdinalIgnoreCase)
+                || configuredMode.Equals(NotificationDispatchModes.RabbitMq, StringComparison.OrdinalIgnoreCase))
+            {
+                return configuredMode;
+            }
+
+            throw new InvalidOperationException(
+                $"Unsupported notification dispatch mode '{configuredMode}'. Supported values are '{NotificationDispatchModes.InProcess}' and '{NotificationDispatchModes.RabbitMq}'.");
+        }
+
+        var environment = configuration["ASPNETCORE_ENVIRONMENT"];
+        return string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase)
+            ? NotificationDispatchModes.RabbitMq
+            : NotificationDispatchModes.InProcess;
     }
 }

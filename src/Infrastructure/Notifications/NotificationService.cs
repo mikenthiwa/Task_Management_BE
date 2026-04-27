@@ -11,27 +11,17 @@ public class NotificationService(IApplicationDbContext applicationDbContext,
 {
     public async Task<Guid> CreateNotificationAsync(string userId, string message, NotificationType type, string? actionUrl, string? actionLabel)
     {
-        
-        // var notification = string.IsNullOrEmpty(actionUrl) && string.IsNullOrEmpty(actionLabel) 
-        //     ? new Notification(userId, type, message)
-        //     : new Notification(userId, type, message)
-        //     {
-        //         Action = new NotificationAction()
-        //         {
-        //             ActionUrl = actionUrl!,
-        //             ActionLabel = actionLabel!
-        //         }
-        //     };
+        var notification = new Notification(userId, type, message);
 
-        var notification = new Notification(userId, type, message)
+        if (!string.IsNullOrWhiteSpace(actionUrl)
+            && !string.IsNullOrWhiteSpace(actionLabel))
         {
-             // ActionUrl = actionUrl!, ActionLabel = actionLabel! 
-             Action = new NotificationAction()
-             {
-                 ActionUrl = actionUrl!,
-                 ActionLabel = actionLabel!
-             }
-        };
+            notification.Action = new NotificationAction
+            {
+                ActionUrl = actionUrl,
+                ActionLabel = actionLabel
+            };
+        }
         
         applicationDbContext.Notifications.Add(notification);
         await applicationDbContext.SaveChangesAsync(CancellationToken.None);

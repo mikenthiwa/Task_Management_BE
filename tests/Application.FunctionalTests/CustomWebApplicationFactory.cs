@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Testcontainers.PostgreSql;
+using Application.Common.Interfaces;
 using IMessageBus = Application.Common.Interfaces.IMessageBus;
 
 namespace Application.FunctionalTests;
@@ -45,6 +46,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             });
             services.RemoveAll<IMessageBus>();
             services.TryAddSingleton<IMessageBus, NoOpMessageBus>();
+            services.RemoveAll<INotificationDispatcher>();
+            services.TryAddSingleton<INotificationDispatcher, NoOpNotificationDispatcher>();
         });
     }
     public Task InitializeAsync()
