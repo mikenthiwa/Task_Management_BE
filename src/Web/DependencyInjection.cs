@@ -56,10 +56,36 @@ public static class DependencyInjection
             });
             
         });
-        services.AddHealthChecks()
+        var healthChecks = services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live", "ready"])
             .AddNpgSql(connectionString, name: "postgresql", tags: ["ready"])
-            .AddCheck<RedisHealthCheck>("redis", tags: ["ready"])
-            .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: ["ready"]);
+            .AddCheck<RedisHealthCheck>("redis", tags: ["ready"]);
+
+        if (IsRabbitMqNotificationDispatchEnabled(configuration))
+        {
+            healthChecks.AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: ["ready"]);
+        }
+    }
+
+    private static bool IsRabbitMqNotificationDispatchEnabled(IConfiguration configuration)
+    {
+        var configuredMode = configuration[$"{NotificationDispatchOptions.SectionName}:DispatchMode"];
+        if (!string.IsNullOrWhiteSpace(configuredMode))
+        {
+            if (configuredMode.Equals(NotificationDispatchModes.RabbitMq, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (configuredMode.Equals(NotificationDispatchModes.InProcess, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            throw new InvalidOperationException(
+                $"Unsupported notification dispatch mode '{configuredMode}'. Supported values are '{NotificationDispatchModes.InProcess}' and '{NotificationDispatchModes.RabbitMq}'.");
+        }
+
+        return string.Equals(configuration["ASPNETCORE_ENVIRONMENT"], "Development", StringComparison.OrdinalIgnoreCase);
     }
 }

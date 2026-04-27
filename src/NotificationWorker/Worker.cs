@@ -64,8 +64,8 @@ public class Worker(
             UserId = message.UserId!,
             Message = message.Message,
             Type = message.Type,
-            ActionUrl = (string?)null,
-            ActionLabel = (string?)null
+            ActionUrl = message.ActionUrl,
+            ActionLabel = message.ActionLabel
         });
         
         response.EnsureSuccessStatusCode();

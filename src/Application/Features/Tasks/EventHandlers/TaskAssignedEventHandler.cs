@@ -7,7 +7,7 @@ using MediatR;
 namespace Application.Features.Tasks.EventHandlers;
 
 public class TaskAssignedEventHandler(
-    IMessageBus messageBus
+    INotificationDispatcher notificationDispatcher
     ) : INotificationHandler<TaskAssignedEvent>
 {
     public async Task Handle(TaskAssignedEvent notification, CancellationToken cancellationToken)
@@ -18,6 +18,6 @@ public class TaskAssignedEventHandler(
             Message = $"You have been assigned to task '{notification.Title}'.",
             UserId = notification.AssigneeId
         };
-        await messageBus.PublishAsync(integrationEvent, exchange: "task.events", routingKey: "task.assigned", cancellationToken);
+        await notificationDispatcher.DispatchAsync(integrationEvent, routingKey: "task.assigned", cancellationToken);
     }
 }
