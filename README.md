@@ -61,6 +61,9 @@
   - `RabbitMq:HostName`
   - `RabbitMq:UserName`
   - `RabbitMq:Password`
+  - `RabbitMq:VirtualHost`
+  - `RabbitMq:Port`
+  - `RabbitMq:UseSsl`
 
 ## Docker
 - Copy the sample environment file and update the secrets:
@@ -94,6 +97,164 @@
   ```
   Equivalent environment variable (user secrets, App Service settings, or Docker environment):  
   `Cors__AllowedOrigins="http://localhost:3000;https://app.example.com"`
+
+## Heroku Container Deployment
+
+This application is deployed to Heroku as two Docker process types:
+
+- `web`: ASP.NET Core API and SignalR hub.
+- `worker`: notification worker that consumes RabbitMQ messages and calls the internal notification API.
+
+### 1. Create and Prepare the Heroku App
+
+If the app does not exist yet:
+
+```bash
+heroku create <app-name>
+```
+
+Set the Heroku stack to container:
+
+```bash
+heroku stack:set container -a <app-name>
+```
+
+Login to the Heroku container registry:
+
+```bash
+heroku container:login
+```
+
+### 2. Required Heroku Add-ons
+
+Provision or attach:
+
+- Heroku Postgres
+- Heroku Redis
+- CloudAMQP
+
+Heroku add-ons usually provide these URL-style config vars automatically:
+
+```text
+DATABASE_URL
+REDIS_URL
+CLOUDAMQP_URL
+```
+
+The application supports those as fallback values through `AddHerokuAddonConfiguration()`. The preferred production contract is structured .NET configuration using `__` separators.
+
+### 3. Recommended Production Config Vars
+
+Use structured config vars where possible:
+
+```bash
+heroku config:set \
+  ASPNETCORE_ENVIRONMENT=Production \
+  ConnectionStrings__DefaultConnection="<postgres-connection-string>" \
+  Caching__Redis__ConnectionString="<redis-connection-string>" \
+  Caching__Redis__SkipCertificateValidation=true \
+  RabbitMq__HostName="<rabbitmq-host>" \
+  RabbitMq__UserName="<rabbitmq-user>" \
+  RabbitMq__Password="<rabbitmq-password>" \
+  RabbitMq__VirtualHost="<rabbitmq-virtual-host>" \
+  RabbitMq__Port=5671 \
+  RabbitMq__UseSsl=true \
+  WebBaseUrl="https://<app-name>.herokuapp.com/" \
+  WorkerApiKey="<shared-worker-key>" \
+  Cors__AllowedOrigins="http://localhost:3000;https://your-frontend.example.com" \
+  -a <app-name>
+```
+
+If structured database, Redis, or RabbitMQ settings are absent, the app falls back to:
+
+- `DATABASE_URL` -> `ConnectionStrings:DefaultConnection`
+- `REDIS_URL` -> `Caching:Redis:ConnectionString`
+- `CLOUDAMQP_URL` -> `RabbitMq:*`
+
+### 4. Build and Push Images
+
+Heroku does not accept all Docker Buildx image indexes. Build a single linux/amd64 image with provenance and SBOM disabled, then load it locally before pushing.
+
+Build and push the web image:
+
+```bash
+docker buildx build \
+  --platform linux/amd64 \
+  --target web \
+  --provenance=false \
+  --sbom=false \
+  --load \
+  -t registry.heroku.com/<app-name>/web .
+
+docker push registry.heroku.com/<app-name>/web
+```
+
+Build and push the worker image:
+
+```bash
+docker buildx build \
+  --platform linux/amd64 \
+  --target worker \
+  --provenance=false \
+  --sbom=false \
+  --load \
+  -t registry.heroku.com/<app-name>/worker .
+
+docker push registry.heroku.com/<app-name>/worker
+```
+
+### 5. Release and Scale Processes
+
+Release both process types:
+
+```bash
+heroku container:release web worker -a <app-name>
+```
+
+Scale both dynos:
+
+```bash
+heroku ps:scale web=1 worker=1 -a <app-name>
+```
+
+The worker is required for RabbitMQ-backed notifications. If only `web` is running, notifications may be stored by API workflows, but queued task notification events will not be consumed.
+
+### 6. Verify Deployment
+
+Check dynos:
+
+```bash
+heroku ps -a <app-name>
+```
+
+Expected process types:
+
+```text
+web.1: up
+worker.1: up
+```
+
+Check health:
+
+```bash
+curl https://<app-name>.herokuapp.com/api/health/live
+curl https://<app-name>.herokuapp.com/api/health
+```
+
+The ready health endpoint should report healthy PostgreSQL, Redis, and RabbitMQ checks.
+
+Check logs:
+
+```bash
+heroku logs -n 100 -a <app-name>
+```
+
+For realtime notifications, confirm:
+
+- SignalR connects to `/notificationHub`.
+- The frontend registers `ReceiveNotification` before starting the hub connection.
+- The hub is authenticated with a fresh access token.
+- The worker logs successful calls to `/api/NotificationsInternal/internal/notifications`.
 
 ## Azure Container Deployment
 - Authenticate with Azure and your container registry(taskmanagementregistry.azurecr.io):
