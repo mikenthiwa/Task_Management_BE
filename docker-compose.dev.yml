@@ -28,6 +28,11 @@ services:
     ports:
       - "8080:8080"
   notification-worker:
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      api:
+        condition: service_started
     image: taskmanagementregistry.azurecr.io/task-management-worker:dev
     build:
       context: .
@@ -49,6 +54,10 @@ services:
     ports:
       - "5434:5432"
   rabbitmq:
+    image: rabbitmq:4.2.2-management
+    restart: unless-stopped
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${DEV_RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${DEV_RABBITMQ_DEFAULT_PASS}

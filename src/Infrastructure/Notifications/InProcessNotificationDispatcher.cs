@@ -6,28 +6,13 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Infrastructure.Notifications;
 
-public sealed class InProcessNotificationDispatcher(
-    IApplicationDbContext applicationDbContext,
-    INotificationPublisherService notificationPublisherService) : INotificationDispatcher
+public sealed class InProcessNotificationDispatcher(INotificationService notificationService) : INotificationDispatcher
 {
     public async Task DispatchAsync(
         NotificationIntegrationEvent notification,
         string routingKey,
         CancellationToken cancellationToken = default)
     {
-        var entity = new Notification(notification.UserId, notification.Type, notification.Message);
-
-        if (!string.IsNullOrWhiteSpace(notification.ActionUrl)
-            && !string.IsNullOrWhiteSpace(notification.ActionLabel))
-        {
-            entity.Action = new NotificationAction
-            {
-                ActionUrl = notification.ActionUrl,
-                ActionLabel = notification.ActionLabel
-            };
-        }
-
-        applicationDbContext.Notifications.Add(entity);
-        await notificationPublisherService.PublishToUserAsync(notification.UserId, entity);
+        await notificationService.CreateNotificationAsync(notification.UserId, notification.Message, notification.Type, notification.ActionUrl, notification.ActionLabel);
     }
 }
