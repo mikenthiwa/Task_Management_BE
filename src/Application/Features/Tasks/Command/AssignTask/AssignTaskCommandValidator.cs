@@ -9,5 +9,9 @@ public class AssignTaskCommandValidator : AbstractValidator<AssignTaskCommand>
         RuleFor(v => v.AssignedId)
             .NotEmpty()
             .WithMessage("AssignedId is required");
+
+        RuleFor(v => v.RowVersion)
+            .GreaterThan(0U)
+            .WithMessage("RowVersion is required");
     }
 }

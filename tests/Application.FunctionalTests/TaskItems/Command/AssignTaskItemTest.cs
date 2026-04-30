@@ -16,7 +16,8 @@ public class AssignTaskItemTest(CustomWebApplicationFactory factory) : BaseFunct
         var taskId = await CreateTaskAsync();
         var command = new AssignTaskCommand
         {
-            AssignedId = ""
+            AssignedId = "",
+            RowVersion = await GetRowVersionAsync(taskId)
         };
 
         var response = await HttpClient.PostAsJsonAsync($"/api/tasks/{taskId}/assign", command);
@@ -36,7 +37,8 @@ public class AssignTaskItemTest(CustomWebApplicationFactory factory) : BaseFunct
 
         var command = new AssignTaskCommand
         {
-            AssignedId = assigneeId
+            AssignedId = assigneeId,
+            RowVersion = await GetRowVersionAsync(taskId)
         };
 
         var response = await HttpClient.PostAsJsonAsync($"/api/tasks/{taskId}/assign", command);
@@ -46,6 +48,60 @@ public class AssignTaskItemTest(CustomWebApplicationFactory factory) : BaseFunct
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var task = await dbContext.Tasks.FindAsync(taskId);
         task!.AssigneeId.Should().Be(assigneeId);
+    }
+
+    [Fact]
+    public async Task ShouldRequireRowVersion()
+    {
+        var taskId = await CreateTaskAsync();
+        var command = new AssignTaskCommand
+        {
+            AssignedId = "assignee-user-id"
+        };
+
+        var response = await HttpClient.PostAsJsonAsync($"/api/tasks/{taskId}/assign", command);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ShouldReturnConflictForStaleRowVersion()
+    {
+        var taskId = await CreateTaskAsync();
+        var staleRowVersion = await GetRowVersionAsync(taskId);
+        const string firstAssigneeId = "first-assignee-user-id";
+        const string secondAssigneeId = "second-assignee-user-id";
+        await EnsureUserAsync(
+            firstAssigneeId,
+            "first-assignee-user",
+            "first-assignee-user@example.com",
+            "https://example.com/first-assignee-user.png");
+        await EnsureUserAsync(
+            secondAssigneeId,
+            "second-assignee-user",
+            "second-assignee-user@example.com",
+            "https://example.com/second-assignee-user.png");
+
+        var firstCommand = new AssignTaskCommand
+        {
+            AssignedId = firstAssigneeId,
+            RowVersion = staleRowVersion
+        };
+        var secondCommand = new AssignTaskCommand
+        {
+            AssignedId = secondAssigneeId,
+            RowVersion = staleRowVersion
+        };
+
+        var firstResponse = await HttpClient.PostAsJsonAsync($"/api/tasks/{taskId}/assign", firstCommand);
+        var secondResponse = await HttpClient.PostAsJsonAsync($"/api/tasks/{taskId}/assign", secondCommand);
+
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.Conflict);
+
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var task = await dbContext.Tasks.FindAsync(taskId);
+        task!.AssigneeId.Should().Be(firstAssigneeId);
     }
 
     [Fact]
@@ -60,7 +116,8 @@ public class AssignTaskItemTest(CustomWebApplicationFactory factory) : BaseFunct
 
         var command = new AssignTaskCommand
         {
-            AssignedId = assigneeId
+            AssignedId = assigneeId,
+            RowVersion = 1
         };
 
         var response = await HttpClient.PostAsJsonAsync($"/api/tasks/{Guid.NewGuid()}/assign", command);
@@ -82,5 +139,13 @@ public class AssignTaskItemTest(CustomWebApplicationFactory factory) : BaseFunct
         dbContext.Tasks.Add(task);
         await dbContext.SaveChangesAsync();
         return task.Id;
+    }
+
+    private async Task<uint> GetRowVersionAsync(Guid taskId)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var task = await dbContext.Tasks.FindAsync(taskId);
+        return task!.RowVersion;
     }
 }

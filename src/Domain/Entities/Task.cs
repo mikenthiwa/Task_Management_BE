@@ -14,6 +14,7 @@ public class Task : BaseAuditableEntity
 
     public string? AssigneeId { get; set; }
     public string? CreatorId { get; set; }
+    public uint RowVersion { get; set; }
 
     public NpgsqlTsVector SearchVector { get; private set; } = default!;
     

@@ -46,6 +46,7 @@ services:
       RabbitMq__UserName: ${DEV_RABBITMQ_DEFAULT_USER}
       RabbitMq__Password: ${DEV_RABBITMQ_DEFAULT_PASS}
       ConnectionStrings__DefaultConnection: ${DEV_API_CONNECTION_STRING}
+      Caching__Redis__ConnectionString: ${DEV_REDIS_CONNECTION_STRING}
   postgres:
     environment:
       POSTGRES_USER: ${DEV_POSTGRES_USER}
