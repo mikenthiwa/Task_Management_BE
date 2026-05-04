@@ -85,9 +85,15 @@
 - To enable distributed caching with Redis, set the connection string (example uses local Redis):
   - `Caching__Redis__ConnectionString=localhost:6379,abortConnect=false`
 - Build and run the stack (API + Postgres):
+
+    *dev*:
   ```bash
   docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up --build
   ```
+  *prod*: 
+    ```bash
+    docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up --build
+    ```
 - The API listens on `http://localhost:8080`. The container uses the connection string supplied in `.env`.
 - If you change service ports or credentials, update `.env` and rerun `docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up`.
 
