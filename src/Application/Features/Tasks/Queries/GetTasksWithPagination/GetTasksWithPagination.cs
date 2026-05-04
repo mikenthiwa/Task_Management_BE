@@ -18,6 +18,7 @@ public record GetTaskWithQuery : IRequest<PaginatedList<TaskDto>>
     public int PageSize { get; init; } = 10;
     public Status? Status { get; init; }
     public string? AssigneeId { get; init; }
+    public string? SearchTerm { get; init; }
 }
 
 public class GetTasksWithPaginationHandler(
@@ -41,28 +42,18 @@ public class GetTasksWithPaginationHandler(
 
         if (cache.TryGetValue(cacheKey, out PaginatedList<TaskDto>? cached) && cached is not null)
         {
-            if (logger.IsEnabled(LogLevel.Debug))
-            {
-                logger.LogDebug("Tasks cache hit for {CacheKey}", cacheKey);
-            }
+            logger.LogDebug("Tasks cache hit for {CacheKey}", cacheKey);
             return cached;
         }
         
         var cachedData = await redisCache.GetAsync<PaginatedList<TaskDto>>(cacheKey, cancellationToken);
         if(cachedData is not null)
         {
-            if (logger.IsEnabled(LogLevel.Debug))
-            {
-                logger.LogDebug("Tasks Redis cache hit for {CacheKey}", cacheKey);
-            }
-
+            logger.LogDebug("Tasks Redis cache hit for {CacheKey}", cacheKey);
             return cachedData;
         }
         
-        if (logger.IsEnabled(LogLevel.Debug))
-        {
-            logger.LogDebug("Tasks cache miss for {CacheKey}", cacheKey);
-        }
+        logger.LogDebug("Tasks cache miss for {CacheKey}", cacheKey);
         var result = await FetchTasksAsync(request, cancellationToken);
         var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromSeconds(options.TtlSeconds));
         cache.Set(cacheKey, result, cacheEntryOptions);
@@ -73,8 +64,7 @@ public class GetTasksWithPaginationHandler(
     private Task<PaginatedList<TaskDto>> FetchTasksAsync(GetTaskWithQuery request, CancellationToken cancellationToken)
     {
         return context.Tasks
-            .AsNoTracking()
-            .TaskQuery(request)
+            .ApplyTaskFilters(request)
             .OrderByDescending(t => t.CreatedAt)
             .ProjectTo<TaskDto>(mapper.ConfigurationProvider)
             .PaginatedListAsync(request.PageNumber, request.PageSize);

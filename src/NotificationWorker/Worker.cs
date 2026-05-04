@@ -6,18 +6,43 @@ using RabbitMQ.Client.Events;
 
 namespace NotificationWorker;
 
-public class Worker(IServiceProvider serviceProvider, string hostName, string userName, string password) : BackgroundService
+public class Worker(
+    IServiceProvider serviceProvider,
+    string hostName,
+    string userName,
+    string password,
+    string virtualHost,
+    int port,
+    bool useSsl) : BackgroundService
 {
+    private const string NotificationQueue = "notification.task.events";
+
     private Task<IConnection>? _connection;
     private Task<IChannel>? _channel;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var factory = new ConnectionFactory { HostName = hostName, UserName = userName, Password = password };
+        var factory = new ConnectionFactory
+        {
+            HostName = hostName,
+            UserName = userName,
+            Password = password,
+            VirtualHost = virtualHost,
+            Port = port
+        };
+        if (useSsl)
+        {
+            factory.Ssl = new SslOption
+            {
+                Enabled = true,
+                ServerName = hostName
+            };
+        }
+
         _connection = factory.CreateConnectionAsync(cancellationToken: stoppingToken);
         _channel = _connection.Result.CreateChannelAsync(cancellationToken: stoppingToken);
 
         await _channel.Result.ExchangeDeclareAsync(exchange: "task.events", type: ExchangeType.Topic, durable: true, autoDelete: false, cancellationToken: stoppingToken);
-        QueueDeclareOk queueDeclareResult = await _channel.Result.QueueDeclareAsync("notification",durable:false, exclusive:false, autoDelete:false, cancellationToken: stoppingToken);
+        QueueDeclareOk queueDeclareResult = await _channel.Result.QueueDeclareAsync(NotificationQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
         string queueName = queueDeclareResult.QueueName;
         await _channel.Result.QueueBindAsync(queue: queueName, exchange: "task.events",
             routingKey: "task.*", cancellationToken: stoppingToken);
@@ -39,8 +64,8 @@ public class Worker(IServiceProvider serviceProvider, string hostName, string us
             UserId = message.UserId!,
             Message = message.Message,
             Type = message.Type,
-            ActionUrl = (string?)null,
-            ActionLabel = (string?)null
+            ActionUrl = message.ActionUrl,
+            ActionLabel = message.ActionLabel
         });
         
         response.EnsureSuccessStatusCode();

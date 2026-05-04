@@ -1,5 +1,6 @@
 using Application.Common.Interfaces;
 using Application.Common.Options;
+using Ardalis.GuardClauses;
 using CloudinaryDotNet;
 using Domain.Constants;
 using Infrastructure.BackgroundWorker;
@@ -17,6 +18,7 @@ using Infrastructure.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -33,7 +35,8 @@ public static class DependencyInjection
     public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-                               ?? throw new InvalidOperationException("Connection string 'TodoDb' not found.");
+                               ?? throw new InvalidOperationException("Connection string not found.");
+        var notificationDispatchMode = GetNotificationDispatchMode(configuration);
         
         QuestPDF.Settings.License = LicenseType.Community;
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
@@ -42,7 +45,9 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseNpgsql(connectionString);
+            options
+                .UseNpgsql(connectionString)
+                .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<ApplicationDbContextInitializer>();
@@ -107,6 +112,7 @@ public static class DependencyInjection
             {
                 options.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
+        services.AddSingleton<IUserIdProvider, NotificationUserIdProvider>();
         services.AddScoped<INotificationPublisherService, NotificationHubServices>();
         services.AddScoped<IReportService, ReportService>();
         services.AddHostedService<ReportBackgroundWorker>();
@@ -124,24 +130,63 @@ public static class DependencyInjection
             return cloudinary;
         });
         services.AddSingleton<IBackgroundJobSignal, BackgroundJobSignal>();
-        services.AddSingleton<IMessageBus>((sp) =>
+        if (notificationDispatchMode.Equals(NotificationDispatchModes.RabbitMq, StringComparison.OrdinalIgnoreCase))
         {
-            var config = sp.GetRequiredService<IConfiguration>();
+            services.AddSingleton<IMessageBus>((sp) =>
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
 
-            var hostName = config.GetValue<string>("RabbitMq:HostName") ?? "localhost";
-            var userName = config.GetValue<string>("RabbitMq:UserName") ?? "admin";
-            var password = config.GetValue<string>("RabbitMq:Password") ?? "admin";
-            var virtualHost = config.GetValue<string>("RabbitMq:VirtualHost") ?? "/";
-            var port = config.GetValue<int?>("RabbitMq:Port") ?? 5672;
-            return new RabbitMqMessageBus(hostName, userName, password, virtualHost, port);
-        });
+                var hostName = config.GetValue<string>("RabbitMq:HostName") ?? "localhost";
+                var userName = config.GetValue<string>("RabbitMq:UserName") ?? "admin";
+                var password = config.GetValue<string>("RabbitMq:Password") ?? "admin";
+                var virtualHost = config.GetValue<string>("RabbitMq:VirtualHost") ?? "/";
+                var port = config.GetValue<int?>("RabbitMq:Port") ?? 5672;
+                var useSsl = config.GetValue<bool>("RabbitMq:UseSsl");
+                return new RabbitMqMessageBus(hostName, userName, password, virtualHost, port, useSsl);
+            });
+            services.AddScoped<INotificationDispatcher, RabbitMqNotificationDispatcher>();
+        }
+        else
+        {
+            services.AddScoped<INotificationDispatcher, InProcessNotificationDispatcher>();
+        }
+
         services.AddMemoryCache();
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            var redisConnectionString = config["Caching:Redis:ConnectionString"] ?? "localhost:6379"; 
-            return ConnectionMultiplexer.Connect(redisConnectionString);
+            var redisConnectionString = Guard.Against.NullOrWhiteSpace(
+                config["Caching:Redis:ConnectionString"],
+                "Redis connection string is not configured.");
+            var redisOptions = ConfigurationOptions.Parse(redisConnectionString);
+            if (config.GetValue<bool>("Caching:Redis:SkipCertificateValidation"))
+            {
+                redisOptions.CertificateValidation += (_, _, _, _) => true;
+            }
+
+            return ConnectionMultiplexer.Connect(redisOptions);
         });
         services.AddScoped<IRedisCacheService, RedisCacheService>();
+    }
+
+    private static string GetNotificationDispatchMode(IConfiguration configuration)
+    {
+        var configuredMode = configuration[$"{NotificationDispatchOptions.SectionName}:DispatchMode"];
+        if (!string.IsNullOrWhiteSpace(configuredMode))
+        {
+            if (configuredMode.Equals(NotificationDispatchModes.InProcess, StringComparison.OrdinalIgnoreCase)
+                || configuredMode.Equals(NotificationDispatchModes.RabbitMq, StringComparison.OrdinalIgnoreCase))
+            {
+                return configuredMode;
+            }
+
+            throw new InvalidOperationException(
+                $"Unsupported notification dispatch mode '{configuredMode}'. Supported values are '{NotificationDispatchModes.InProcess}' and '{NotificationDispatchModes.RabbitMq}'.");
+        }
+
+        var environment = configuration["ASPNETCORE_ENVIRONMENT"];
+        return string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase)
+            ? NotificationDispatchModes.RabbitMq
+            : NotificationDispatchModes.InProcess;
     }
 }

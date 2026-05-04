@@ -8,8 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Task = System.Threading.Tasks.Task;
-using TaskItem = Domain.Entities.Task;
 
 namespace Infrastructure.Data;
 
@@ -100,24 +100,29 @@ public class ApplicationDbContextInitializer(
         }
         
         
-        if (!dbContext.Tasks.Any())
+        var connectionString = dbContext.Database.GetConnectionString() ?? throw new InvalidOperationException("Connection string not found.");
+        var conn = new NpgsqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var writer = conn.BeginBinaryImport(
+            """
+            COPY "Tasks" ("Id","Title","Description","Status","Priority","CreatorId","AssigneeId","CreatedAt")
+            FROM STDIN (FORMAT BINARY)
+            """
+        );
+        for (int i = 1; i <= 500_000; i++)
         {
-            for (int i = 1; i <= 15; i++)
-            {
-                var task = new TaskItem
-                {
-                    Title = $"Task {i}",
-                    Description = $"This is task number {i}.",
-                    Status = 0,
-                    Priority = 0,
-                    CreatorId = user.Id,
-                    AssigneeId = user.Id
-                };
-                dbContext.Tasks.Add(task);
-            }
+            writer.StartRow();
+            writer.Write(Guid.NewGuid());
+            writer.Write($"Task {i}");
+            writer.Write($"This is task number {i}");
+            writer.Write(0);
+            writer.Write(0);
+            writer.Write(user.Id);
+            writer.Write(user.Id);
+            writer.Write(DateTime.UtcNow.AddMinutes(-i));
         }
-        
-        await dbContext.SaveChangesAsync();
+        await writer.CompleteAsync();
     }
     
 }

@@ -8,7 +8,7 @@ namespace Application.Features.Tasks.EventHandlers;
 
 public class TaskStatusUpdatedEventHandler(
     IApplicationDbContext applicationDb,
-    IMessageBus messageBus
+    INotificationDispatcher notificationDispatcher
     ) : INotificationHandler<TaskStatusUpdatedEvent>
 {
     public async Task Handle(TaskStatusUpdatedEvent notification, CancellationToken cancellationToken)
@@ -26,7 +26,7 @@ public class TaskStatusUpdatedEventHandler(
                 Message = message,
                 UserId = task.CreatorId
             };
-            await messageBus.PublishAsync(integrationEvent, exchange: "task.events", routingKey: "task.updated", cancellationToken);
+            await notificationDispatcher.DispatchAsync(integrationEvent, routingKey: "task.updated", cancellationToken);
         }
     }
 }
