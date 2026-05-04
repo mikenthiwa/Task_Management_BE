@@ -21,6 +21,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         .WithUsername("postgres")
         .WithPassword("postgres")
         .Build();
+
+    public CustomWebApplicationFactory()
+    {
+        Environment.SetEnvironmentVariable("Caching__Redis__ConnectionString", "localhost:6379");
+    }
     
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

@@ -64,7 +64,6 @@ public class GetTasksWithPaginationHandler(
     private Task<PaginatedList<TaskDto>> FetchTasksAsync(GetTaskWithQuery request, CancellationToken cancellationToken)
     {
         return context.Tasks
-            .AsNoTracking()
             .ApplyTaskFilters(request)
             .OrderByDescending(t => t.CreatedAt)
             .ProjectTo<TaskDto>(mapper.ConfigurationProvider)

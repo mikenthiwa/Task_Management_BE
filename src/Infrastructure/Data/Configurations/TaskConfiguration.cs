@@ -25,6 +25,9 @@ public class TaskConfiguration : IEntityTypeConfiguration<Task>
         builder.Property(t => t.CreatorId)
             .HasMaxLength(450);
 
+        builder.Property(t => t.RowVersion)
+            .IsRowVersion();
+
         builder.HasOne(task => task.Assignee)
             .WithMany(u => u.AssignedTasks)
             .HasForeignKey(t => t.AssigneeId)
