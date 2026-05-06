@@ -32,7 +32,8 @@ public class ApplicationDbContextInitializer(
     ILogger<ApplicationDbContextInitializer> logger,
     ApplicationDbContext dbContext,
     UserManager<ApplicationUser> userManager,
-    RoleManager<IdentityRole> roleManager
+    RoleManager<IdentityRole> roleManager,
+    IConfiguration configuration
     )
 {
     
@@ -84,27 +85,58 @@ public class ApplicationDbContextInitializer(
             await roleManager.CreateAsync(userRole);
         }
         
-        var user = new ApplicationUser() { UserName = "michaelnthiwa", Email = "mikenthiwa@gmail.com", Picture = "https://lh3.googleusercontent.com/a/ACg8ocJX24gftNNPXzvDtWVUN-DTI3aImb7CkOsSHuQiwtWKnnhPlx5rew=s96-c"};
-        if (userManager.Users.All(u => u.UserName != user.UserName))
+        var user = await userManager.FindByNameAsync("michaelnthiwa");
+        if (user is null)
         {
+            user = new ApplicationUser() { UserName = "michaelnthiwa", Email = "mikenthiwa@gmail.com", Picture = "https://lh3.googleusercontent.com/a/ACg8ocJX24gftNNPXzvDtWVUN-DTI3aImb7CkOsSHuQiwtWKnnhPlx5rew=s96-c"};
             await userManager.CreateAsync(user);
             if (!string.IsNullOrWhiteSpace(userRole.Name))
             {
                 await userManager.AddToRolesAsync(user, new [] { userRole.Name });
             }
+        }
 
-            if (!dbContext.DomainUsers.Any(u => u.Id == user.Id))
-            {
-                dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName, user.Email, "https://lh3.googleusercontent.com/a/ACg8ocJX24gftNNPXzvDtWVUN-DTI3aImb7CkOsSHuQiwtWKnnhPlx5rew=s96-c"));
-            }
+        if (!dbContext.DomainUsers.Any(u => u.Id == user.Id))
+        {
+            dbContext.DomainUsers.Add(new DomainUser(user.Id, user.UserName!, user.Email!, user.Picture));
+        }
+
+        await dbContext.SaveChangesAsync();
+
+        if (!isDevelopment)
+        {
+            return;
+        }
+
+        var taskSeedCount = configuration.GetValue("SeedData:DevelopmentTaskCount", 500_000);
+        if (taskSeedCount <= 0)
+        {
+            return;
         }
         
+        // await dbContext.Database.ExecuteSqlRawAsync(
+        //     """
+        //     INSERT INTO "Tasks" ("Id", "Title", "Description", "Status", "Priority", "CreatorId", "AssigneeId", "CreatedAt")
+        //     SELECT
+        //         ('00000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+        //         'Task ' || i::text,
+        //         'This is task number ' || i::text,
+        //         0,
+        //         0,
+        //         {1},
+        //         {1},
+        //         now() - (i * interval '1 minute')
+        //     FROM generate_series(1, {0}) AS i
+        //     """,
+        //     taskSeedCount,
+        //     user.Id
+        // );
         
         var connectionString = dbContext.Database.GetConnectionString() ?? throw new InvalidOperationException("Connection string not found.");
-        var conn = new NpgsqlConnection(connectionString);
+        await using var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync();
 
-        var writer = conn.BeginBinaryImport(
+        await using var writer = await conn.BeginBinaryImportAsync(
             """
             COPY "Tasks" ("Id","Title","Description","Status","Priority","CreatorId","AssigneeId","CreatedAt")
             FROM STDIN (FORMAT BINARY)
@@ -126,3 +158,4 @@ public class ApplicationDbContextInitializer(
     }
     
 }
+
