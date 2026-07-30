@@ -23,6 +23,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using QuestPDF.Infrastructure;
 using StackExchange.Redis;
@@ -32,33 +33,33 @@ namespace Infrastructure;
 
 public static class DependencyInjection
 {
-    public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
+    public static IHostApplicationBuilder AddInfrastructureServices(this IHostApplicationBuilder builder)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                                ?? throw new InvalidOperationException("Connection string not found.");
-        var notificationDispatchMode = GetNotificationDispatchMode(configuration);
+        var notificationDispatchMode = GetNotificationDispatchMode(builder.Configuration);
         
         QuestPDF.Settings.License = LicenseType.Community;
-        services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
-        services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
         
-        services.AddDbContext<ApplicationDbContext>((sp, options) =>
+        builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             options
                 .UseNpgsql(connectionString)
                 .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
-        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-        services.AddScoped<ApplicationDbContextInitializer>();
-        services.AddSingleton<IAuthorizationMiddlewareResultHandler, ApiAuthResultHandler>();
-        // services.AddAuthentication()
+        builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+        builder.Services.AddScoped<ApplicationDbContextInitializer>();
+        builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ApiAuthResultHandler>();
+        // builder.Services.AddAuthentication()
         //     .AddBearerToken(IdentityConstants.BearerScheme);
-        // services.AddOptions<BearerTokenOptions>(IdentityConstants.BearerScheme).Configure(opt =>
+        // builder.Services.AddOptions<BearerTokenOptions>(IdentityConstants.BearerScheme).Configure(opt =>
         // {
         //     opt.BearerTokenExpiration = TimeSpan.FromMinutes(2);
         // });
-        services.AddAuthentication(options =>
+        builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -71,10 +72,10 @@ public static class DependencyInjection
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = configuration["Jwt:Issuer"],
-                    ValidAudience = configuration["Jwt:Audience"],
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
                     IssuerSigningKey =
-                        new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
+                        new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
                     ClockSkew = TimeSpan.Zero
                 };
                 options.Events = new JwtBearerEvents
@@ -94,29 +95,29 @@ public static class DependencyInjection
                 };
             }
         );
-        services.AddScoped<ITokenService, TokenService>();
-        services.AddIdentityCore<ApplicationUser>()
+        builder.Services.AddScoped<ITokenService, TokenService>();
+        builder.Services.AddIdentityCore<ApplicationUser>()
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddApiEndpoints();
-        services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUserService, AppUser>();
-        services.AddScoped<INotificationService, NotificationService>();
-        services.AddAuthorization(options =>
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ICurrentUserService, AppUser>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
+        builder.Services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator))
         );
-        services.AddScoped<UserManager<ApplicationUser>, ApplicationUserManager>();
-        services.AddTransient<IIdentityService, IdentityService>();
-        services.AddSignalR()
+        builder.Services.AddScoped<UserManager<ApplicationUser>, ApplicationUserManager>();
+        builder.Services.AddTransient<IIdentityService, IdentityService>();
+        builder.Services.AddSignalR()
             .AddJsonProtocol(options =>
             {
                 options.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
-        services.AddSingleton<IUserIdProvider, NotificationUserIdProvider>();
-        services.AddScoped<INotificationPublisherService, NotificationHubServices>();
-        services.AddScoped<IReportService, ReportService>();
-        services.AddHostedService<ReportBackgroundWorker>();
-        services.AddSingleton<Cloudinary>((sp) =>
+        builder.Services.AddSingleton<IUserIdProvider, NotificationUserIdProvider>();
+        builder.Services.AddScoped<INotificationPublisherService, NotificationHubServices>();
+        builder.Services.AddScoped<IReportService, ReportService>();
+        builder.Services.AddHostedService<ReportBackgroundWorker>();
+        builder.Services.AddSingleton<Cloudinary>((sp) =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
             var cloudinarySection = config.GetSection("Cloudinary");
@@ -129,10 +130,10 @@ public static class DependencyInjection
             cloudinary.Api.Secure = true;
             return cloudinary;
         });
-        services.AddSingleton<IBackgroundJobSignal, BackgroundJobSignal>();
+        builder.Services.AddSingleton<IBackgroundJobSignal, BackgroundJobSignal>();
         if (notificationDispatchMode.Equals(NotificationDispatchModes.RabbitMq, StringComparison.OrdinalIgnoreCase))
         {
-            services.AddSingleton<IMessageBus>((sp) =>
+            builder.Services.AddSingleton<IMessageBus>((sp) =>
             {
                 var config = sp.GetRequiredService<IConfiguration>();
 
@@ -144,15 +145,15 @@ public static class DependencyInjection
                 var useSsl = config.GetValue<bool>("RabbitMq:UseSsl");
                 return new RabbitMqMessageBus(hostName, userName, password, virtualHost, port, useSsl);
             });
-            services.AddScoped<INotificationDispatcher, RabbitMqNotificationDispatcher>();
+            builder.Services.AddScoped<INotificationDispatcher, RabbitMqNotificationDispatcher>();
         }
         else
         {
-            services.AddScoped<INotificationDispatcher, InProcessNotificationDispatcher>();
+            builder.Services.AddScoped<INotificationDispatcher, InProcessNotificationDispatcher>();
         }
 
-        services.AddMemoryCache();
-        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
             var redisConnectionString = Guard.Against.NullOrWhiteSpace(
@@ -166,7 +167,9 @@ public static class DependencyInjection
 
             return ConnectionMultiplexer.Connect(redisOptions);
         });
-        services.AddScoped<IRedisCacheService, RedisCacheService>();
+        builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
+
+        return builder;
     }
 
     private static string GetNotificationDispatchMode(IConfiguration configuration)
