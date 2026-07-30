@@ -9,7 +9,7 @@ var assembly = Assembly.GetExecutingAssembly();
 
 builder.Configuration.AddHerokuAddonConfiguration();
 
-builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.AddInfrastructureServices();
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
 builder.Services.AddAutoMapper(_ => { }, assembly);

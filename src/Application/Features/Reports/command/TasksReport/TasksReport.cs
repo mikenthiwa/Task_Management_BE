@@ -18,6 +18,6 @@ public class TasksReport(IApplicationDbContext applicationDbContext, IBackground
         applicationDbContext.ReportJobs.Add(job);
         await applicationDbContext.SaveChangesAsync(cancellationToken);
         signal.Signal();
-        return  job.Id;
+        return job.Id;
     }
 }

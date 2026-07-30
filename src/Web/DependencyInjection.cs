@@ -11,23 +11,21 @@ namespace Task_Management_BE;
 
 public static class DependencyInjection
 {
-    public static void AddWebServices(this IServiceCollection services, IConfiguration configuration)
+    public static IHostApplicationBuilder AddWebServices(this IHostApplicationBuilder builder)
     {
         var connectionString = Guard.Against.NullOrWhiteSpace(
-            configuration.GetConnectionString("DefaultConnection"),
+            builder.Configuration.GetConnectionString("DefaultConnection"),
             message: "Connection string 'DefaultConnection' is not configured.");
         var redisConnectionString = Guard.Against.NullOrWhiteSpace(
-            configuration["Caching:Redis:ConnectionString"],
+            builder.Configuration["Caching:Redis:ConnectionString"],
             message: "Redis connection string is not configured.");
-
-        var allowedOrigins = configuration["Cors:AllowedOrigins"]
-            ?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
-        services.AddOpenApi();
-        services.AddExceptionHandler<GlobalExceptionHandler>();
-        services.AddEndpointsApiExplorer();
-        services.AddProblemDetails();
         
-        services.AddOpenApiDocument((configure, sp) =>
+        builder.Services.AddOpenApi();
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddProblemDetails();
+        
+        builder.Services.AddOpenApiDocument((configure, sp) =>
         {
             configure.Title = "Task Management API";
             configure.AddSecurity("JWT", Enumerable.Empty<string>(), new OpenApiSecurityScheme
@@ -38,33 +36,54 @@ public static class DependencyInjection
                 Description = "Type into the textbox: Bearer {your JWT token}."
             });
         });
-        services.Configure<JsonOptions>(options =>
+        builder.Services.Configure<JsonOptions>(options =>
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter())
         );
-        services.ConfigureHttpJsonOptions(options =>
+        builder.Services.ConfigureHttpJsonOptions(options =>
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter())
         );
-        services.AddCors(options =>
+        var allowedOrigins = builder.Configuration.GetSection(CorsOptions.SectionName)
+            .Get<CorsOptions>()?
+            .AllowedOrigins.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
+        var isDevelopment = builder.Environment.IsDevelopment();
+        if (!isDevelopment && allowedOrigins.Length == 0)
         {
-            options.AddPolicy("MyAllowSpecificOrigins", builder =>
+            throw new InvalidOperationException(
+                "Cors:AllowedOrigins must be configured outside Development.");
+        }
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(CorsOptions.PolicyName, policy =>
             {
-                var origins = allowedOrigins.Length > 0 ? allowedOrigins : ["http://localhost:3000"];
-                builder.WithOrigins(origins)
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
+                if (isDevelopment)
+                {
+                    var origins = allowedOrigins.Length > 0 ? allowedOrigins : ["http://localhost:3000"];
+                    policy.WithOrigins(origins)
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+
+                    return;
+                }
+
+                policy.WithOrigins(allowedOrigins)
+                    .WithMethods("GET", "POST", "PATCH", "OPTIONS")
+                    .WithHeaders("Content-Type", "Authorization")
                     .AllowCredentials();
             });
-            
         });
-        var healthChecks = services.AddHealthChecks()
+        var healthChecks = builder.Services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live", "ready"])
             .AddNpgSql(connectionString, name: "postgresql", tags: ["ready"])
             .AddCheck<RedisHealthCheck>("redis", tags: ["ready"]);
 
-        if (IsRabbitMqNotificationDispatchEnabled(configuration))
+        if (IsRabbitMqNotificationDispatchEnabled(builder.Configuration))
         {
             healthChecks.AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: ["ready"]);
         }
+
+        return builder;
     }
 
     private static bool IsRabbitMqNotificationDispatchEnabled(IConfiguration configuration)

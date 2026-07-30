@@ -1,3 +1,4 @@
+using Application.Common.Options;
 using Infrastructure.Data;
 using Infrastructure.Configuration;
 using Infrastructure.Hubs;
@@ -16,9 +17,10 @@ if (builder.Environment.IsDevelopment() && !runningInContainer)
     builder.Configuration.AddUserSecrets<Program>(optional: true);
 }
 
-builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices(builder.Configuration);
-builder.Services.AddWebServices(builder.Configuration);
+builder
+    .AddApplicationServices()
+    .AddInfrastructureServices()
+    .AddWebServices();
 
 
 var app = builder.Build();
@@ -40,7 +42,7 @@ app.UseSwaggerUi(settings =>
 
 app.UseExceptionHandler(options => { });
 // app.UseHttpsRedirection();
-app.UseCors("MyAllowSpecificOrigins");
+app.UseCors(CorsOptions.PolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapEndpoints();
