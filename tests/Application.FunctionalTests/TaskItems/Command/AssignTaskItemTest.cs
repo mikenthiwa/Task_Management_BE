@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Application.Features.Tasks.Command.AssignTask;
 using FluentAssertions;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TaskEntity = Domain.Entities.Task;
 
@@ -41,6 +42,13 @@ public class AssignTaskItemTest(CustomWebApplicationFactory factory) : BaseFunct
             RowVersion = await GetRowVersionAsync(taskId)
         };
 
+        int outboxCountBefore;
+        using (var beforeScope = Factory.Services.CreateScope())
+        {
+            var beforeContext = beforeScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            outboxCountBefore = await beforeContext.OutboxMessages.CountAsync(message => message.RoutingKey == "task.assigned");
+        }
+
         var response = await HttpClient.PostAsJsonAsync($"/api/tasks/{taskId}/assign", command);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -48,6 +56,8 @@ public class AssignTaskItemTest(CustomWebApplicationFactory factory) : BaseFunct
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var task = await dbContext.Tasks.FindAsync(taskId);
         task!.AssigneeId.Should().Be(assigneeId);
+        (await dbContext.OutboxMessages.CountAsync(message => message.RoutingKey == "task.assigned"))
+            .Should().Be(outboxCountBefore + 1);
     }
 
     [Fact]

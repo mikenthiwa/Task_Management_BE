@@ -18,10 +18,31 @@ services:
       Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME}
       Cloudinary__ApiKey: ${CLOUDINARY_API_KEY}
       Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET}
-      Notifications__DispatchMode: InProcess
+      WorkerApiKey: ${WORKER_API_KEY}
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_DEFAULT_USER}
+      RabbitMq__Password: ${RABBITMQ_DEFAULT_PASS}
       Caching__Redis__ConnectionString: ${REDIS_CONNECTION_STRING}
     ports:
       - "8080:8080"
+  notification-worker:
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      api:
+        condition: service_started
+    image: taskmanagementregistry.azurecr.io/task-management-worker:prod
+    build:
+      context: .
+      target: worker
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      WebBaseUrl: http://api:8080/
+      WorkerApiKey: ${WORKER_API_KEY}
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_DEFAULT_USER}
+      RabbitMq__Password: ${RABBITMQ_DEFAULT_PASS}
   postgres:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -29,3 +50,14 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5434:5432"
+  rabbitmq:
+    image: rabbitmq:4.2.2-management
+    restart: unless-stopped
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"

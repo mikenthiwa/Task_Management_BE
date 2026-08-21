@@ -6,6 +6,7 @@ public interface IMessageBus
         T message,
         string exchange,
         string routingKey,
+        Guid messageId,
         CancellationToken cancellationToken = default
         );
 }

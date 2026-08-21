@@ -10,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Testcontainers.PostgreSql;
 using Application.Common.Interfaces;
+using Infrastructure.Outbox;
+using Microsoft.Extensions.Hosting;
 using IMessageBus = Application.Common.Interfaces.IMessageBus;
 
 namespace Application.FunctionalTests;
@@ -50,9 +52,20 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                     .Build();
             });
             services.RemoveAll<IMessageBus>();
-            services.TryAddSingleton<IMessageBus, NoOpMessageBus>();
-            services.RemoveAll<INotificationDispatcher>();
-            services.TryAddSingleton<INotificationDispatcher, NoOpNotificationDispatcher>();
+            services.TryAddSingleton<NoOpMessageBus>();
+            services.TryAddSingleton<IMessageBus>(provider => provider.GetRequiredService<NoOpMessageBus>());
+            var outboxWorkerDescriptor = services.FirstOrDefault(descriptor =>
+                descriptor.ServiceType == typeof(IHostedService)
+                && descriptor.ImplementationType == typeof(OutboxPublisherWorker));
+            if (outboxWorkerDescriptor is not null)
+            {
+                services.Remove(outboxWorkerDescriptor);
+            }
+
+            services.RemoveAll<INotificationPublisherService>();
+            services.TryAddSingleton<RecordingNotificationPublisherService>();
+            services.TryAddSingleton<INotificationPublisherService>(provider =>
+                provider.GetRequiredService<RecordingNotificationPublisherService>());
         });
     }
     public Task InitializeAsync()
