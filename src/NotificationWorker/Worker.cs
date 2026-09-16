@@ -1,13 +1,13 @@
-using System.Text.Json;
-using System.Net.Http.Json;
-using Application.Common.Models;
+using Infrastructure.RabbitMq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
 namespace NotificationWorker;
 
-public class Worker(
-    IServiceProvider serviceProvider,
+public sealed class Worker(
+    NotificationDeliveryHandler deliveryHandler,
+    Microsoft.Extensions.Options.IOptions<Application.Common.Options.NotificationConsumerOptions> options,
+    ILogger<Worker> logger,
     string hostName,
     string userName,
     string password,
@@ -15,10 +15,9 @@ public class Worker(
     int port,
     bool useSsl) : BackgroundService
 {
-    private const string NotificationQueue = "notification.task.events";
+    private IConnection? _connection;
+    private IChannel? _channel;
 
-    private Task<IConnection>? _connection;
-    private Task<IChannel>? _channel;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var factory = new ConnectionFactory
@@ -27,47 +26,128 @@ public class Worker(
             UserName = userName,
             Password = password,
             VirtualHost = virtualHost,
-            Port = port
+            Port = port,
+            AutomaticRecoveryEnabled = false,
+            TopologyRecoveryEnabled = false
         };
         if (useSsl)
         {
-            factory.Ssl = new SslOption
-            {
-                Enabled = true,
-                ServerName = hostName
-            };
+            factory.Ssl = new SslOption { Enabled = true, ServerName = hostName };
         }
 
-        _connection = factory.CreateConnectionAsync(cancellationToken: stoppingToken);
-        _channel = _connection.Result.CreateChannelAsync(cancellationToken: stoppingToken);
-
-        await _channel.Result.ExchangeDeclareAsync(exchange: "task.events", type: ExchangeType.Topic, durable: true, autoDelete: false, cancellationToken: stoppingToken);
-        QueueDeclareOk queueDeclareResult = await _channel.Result.QueueDeclareAsync(NotificationQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
-        string queueName = queueDeclareResult.QueueName;
-        await _channel.Result.QueueBindAsync(queue: queueName, exchange: "task.events",
-            routingKey: "task.*", cancellationToken: stoppingToken);
-        var consumer = new AsyncEventingBasicConsumer(_channel.Result);
-        consumer.ReceivedAsync += HandleMessageAsync;
-        await _channel.Result.BasicConsumeAsync(queue: queueName, autoAck: true, consumer: consumer, cancellationToken: stoppingToken);
-    }
-    
-    public async Task HandleMessageAsync(object model, BasicDeliverEventArgs ea)
-    {
-        byte[] body = ea.Body.ToArray();
-        var message = JsonSerializer.Deserialize<NotificationIntegrationEvent>(body)!;
-        using var scope = serviceProvider.CreateScope();
-        var httpClientFactory = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>();
-        var httpClient = httpClientFactory.CreateClient("web");
-
-        var response = await httpClient.PostAsJsonAsync("api/NotificationsInternal/internal/notifications", new
+        while (!stoppingToken.IsCancellationRequested)
         {
-            UserId = message.UserId!,
-            Message = message.Message,
-            Type = message.Type,
-            ActionUrl = message.ActionUrl,
-            ActionLabel = message.ActionLabel
-        });
-        
-        response.EnsureSuccessStatusCode();
+            try
+            {
+                _connection = await factory.CreateConnectionAsync(cancellationToken: stoppingToken);
+                _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+                await RabbitMqTopology.DeclareAsync(_channel, stoppingToken);
+                await _channel.BasicQosAsync(0, options.Value.PrefetchCount, global: false, stoppingToken);
+
+                var disconnected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                _connection.ConnectionShutdownAsync += (_, _) =>
+                {
+                    disconnected.TrySetResult();
+                    return Task.CompletedTask;
+                };
+                _channel.ChannelShutdownAsync += (_, _) =>
+                {
+                    disconnected.TrySetResult();
+                    return Task.CompletedTask;
+                };
+
+                var consumer = new AsyncEventingBasicConsumer(_channel);
+                consumer.ReceivedAsync += HandleMessageAsync;
+                await _channel.BasicConsumeAsync(
+                    RabbitMqTopology.NotificationQueue,
+                    autoAck: false,
+                    consumer,
+                    stoppingToken);
+
+                logger.LogInformation("The notification consumer is connected to RabbitMQ.");
+                await disconnected.Task.WaitAsync(stoppingToken);
+                logger.LogWarning("The notification consumer lost its RabbitMQ connection.");
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(
+                    exception,
+                    "The notification consumer could not connect to RabbitMQ. Retrying in {DelaySeconds} seconds.",
+                    options.Value.ReconnectDelaySeconds);
+            }
+            finally
+            {
+                await DisposeResourcesAsync();
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(options.Value.ReconnectDelaySeconds), stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+    }
+
+    private async Task DisposeResourcesAsync()
+    {
+        var channel = _channel;
+        _channel = null;
+        if (channel is not null)
+        {
+            try
+            {
+                if (channel.IsOpen)
+                {
+                    await channel.CloseAsync();
+                }
+
+                await channel.DisposeAsync();
+            }
+            catch (Exception exception)
+            {
+                logger.LogDebug(exception, "RabbitMQ consumer channel cleanup failed.");
+            }
+        }
+
+        var connection = _connection;
+        _connection = null;
+        if (connection is not null)
+        {
+            try
+            {
+                if (connection.IsOpen)
+                {
+                    await connection.CloseAsync();
+                }
+
+                await connection.DisposeAsync();
+            }
+            catch (Exception exception)
+            {
+                logger.LogDebug(exception, "RabbitMQ consumer connection cleanup failed.");
+            }
+        }
+    }
+
+    private Task HandleMessageAsync(object sender, BasicDeliverEventArgs delivery)
+    {
+        var channel = _channel ?? throw new InvalidOperationException("The RabbitMQ channel is not initialized.");
+        return deliveryHandler.HandleAsync(
+            delivery.BasicProperties.MessageId,
+            delivery.Body.ToArray(),
+            cancellationToken => channel.BasicAckAsync(delivery.DeliveryTag, multiple: false, cancellationToken),
+            cancellationToken => channel.BasicNackAsync(
+                delivery.DeliveryTag,
+                multiple: false,
+                requeue: true,
+                cancellationToken),
+            delivery.CancellationToken);
     }
 }

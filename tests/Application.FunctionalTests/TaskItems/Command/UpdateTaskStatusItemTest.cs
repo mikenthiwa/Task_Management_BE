@@ -4,6 +4,7 @@ using Application.Features.Tasks.Command.UpdateTaskStatus;
 using Domain.Enum;
 using FluentAssertions;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TaskEntity = Domain.Entities.Task;
 
@@ -14,7 +15,13 @@ public class UpdateTaskStatusItemTest(CustomWebApplicationFactory factory) : Bas
     [Fact]
     public async Task ShouldUpdateTaskStatusWhenAssignedUser()
     {
-        var taskId = await CreateTaskAsync(assigneeId: "test-user-id");
+        const string creatorId = "status-task-creator-id";
+        await EnsureUserAsync(
+            creatorId,
+            "status-task-creator",
+            "status-task-creator@example.com",
+            "https://example.com/status-task-creator.png");
+        var taskId = await CreateTaskAsync(assigneeId: "test-user-id", creatorId);
         var command = new UpdateTaskStatusCommand
         {
             Status = Status.InProgress
@@ -27,6 +34,8 @@ public class UpdateTaskStatusItemTest(CustomWebApplicationFactory factory) : Bas
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var task = await dbContext.Tasks.FindAsync(taskId);
         task!.Status.Should().Be(Status.InProgress);
+        (await dbContext.OutboxMessages.CountAsync(message => message.RoutingKey == "task.updated"))
+            .Should().Be(1);
     }
 
     [Fact]
@@ -74,7 +83,7 @@ public class UpdateTaskStatusItemTest(CustomWebApplicationFactory factory) : Bas
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    private async Task<Guid> CreateTaskAsync(string assigneeId)
+    private async Task<Guid> CreateTaskAsync(string assigneeId, string creatorId = "test-user-id")
     {
         using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -84,7 +93,7 @@ public class UpdateTaskStatusItemTest(CustomWebApplicationFactory factory) : Bas
             Description = "Task for status update test",
             Status = Status.New,
             Priority = Priority.Low,
-            CreatorId = "test-user-id",
+            CreatorId = creatorId,
             AssigneeId = assigneeId
         };
         dbContext.Tasks.Add(task);

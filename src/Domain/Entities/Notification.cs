@@ -4,7 +4,7 @@ using Domain.ValueObjects;
 
 namespace Domain.Entities;
 
-public class Notification(string userId, NotificationType type, string message) : BaseAuditableEntity
+public class Notification(string userId, NotificationType type, string message, Guid? sourceMessageId = null) : BaseAuditableEntity
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
     public string UserId { get; private set; } = userId;
@@ -15,4 +15,5 @@ public class Notification(string userId, NotificationType type, string message) 
     public bool IsRead { get; private set; } = false;
     public DateTimeOffset? ReadAt { get; private set; }
     public bool IsDeleted { get; private set; } = false;
+    public Guid? SourceMessageId { get; private set; } = sourceMessageId;
 }

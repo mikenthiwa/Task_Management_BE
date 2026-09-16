@@ -29,6 +29,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\Web\Web.csproj" />
+      <ProjectReference Include="..\..\src\NotificationWorker\NotificationWorker.csproj"
+                        Aliases="NotificationWorkerAssembly" />
     </ItemGroup>
 
 </Project>

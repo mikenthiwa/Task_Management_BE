@@ -40,5 +40,8 @@ public class NotificationsConfiguration : IEntityTypeConfiguration<Notification>
 
         builder.HasIndex(notification => notification.UserId);
         builder.HasIndex(notification => notification.IsRead);
+        builder.HasIndex(notification => notification.SourceMessageId)
+            .IsUnique()
+            .HasFilter("\"SourceMessageId\" IS NOT NULL");
     }
 }

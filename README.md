@@ -37,17 +37,12 @@
   dotnet test tests/Application.FunctionalTests/Application.FunctionalTests.csproj
   ```
 
-## Notification Worker (SignalR publishing via web API)
-- Notification dispatch is controlled by `Notifications:DispatchMode`.
-- Supported values:
-  - `InProcess`: the API stores notifications and pushes SignalR updates directly.
-  - `RabbitMq`: the API publishes notification events to RabbitMQ, and the worker consumes them.
-- Default behavior:
-  - `Development` defaults to `RabbitMq`.
-  - Non-development environments default to `InProcess`.
-- The worker is only required when `Notifications:DispatchMode=RabbitMq`.
-- When RabbitMQ mode is enabled, the worker publishes notifications by calling the web API endpoint `POST /api/NotificationsInternal/internal/notifications`.
-- Configure these settings for both the web app and the worker:
+## Notification Delivery
+- The API stores domain changes and notification outbox messages in one PostgreSQL transaction.
+- The API hosts `OutboxPublisherWorker`, which publishes pending messages to RabbitMQ with stable message IDs and publisher confirmations.
+- The standalone `NotificationWorker` is the manually managed testing ground for consuming RabbitMQ messages. It uses manual acknowledgements and calls `POST /api/NotificationsInternal/internal/notifications`.
+- RabbitMQ downtime does not prevent API writes because publication runs in the API's background service and pending messages remain in the outbox.
+- Configure these settings where applicable:
   - `WorkerApiKey`: shared secret sent in the `X-Worker-Key` header.
   - `WebBaseUrl`: base URL for the web app (worker only), e.g. `http://localhost:5000/`.
 - Example worker user secrets:
@@ -59,19 +54,20 @@
   dotnet user-secrets set "RabbitMQ:HostName" "<rabbitmq-host>"
   dotnet user-secrets set "RabbitMQ:UserName" "<rabbitmq-username>"
   dotnet user-secrets set "RabbitMQ:Password" "<rabbitmq-password>"
-  dotnet user-secrets set "Caching:Redis:ConnectionString" "localhost:6379,abortConnect=false"
   ```
 - Run the worker:
   ```bash
   dotnet run --project src/NotificationWorker
   ```
-- RabbitMQ settings for the worker (optional; defaults to `localhost/admin/admin`):
+- RabbitMQ settings for both the API publisher and standalone consumer (optional; defaults to `localhost/admin/admin`):
   - `RabbitMq:HostName`
   - `RabbitMq:UserName`
   - `RabbitMq:Password`
   - `RabbitMq:VirtualHost`
   - `RabbitMq:Port`
   - `RabbitMq:UseSsl`
+- Optional outbox tuning is available under `Outbox:*` in `src/Web/appsettings.json`. Consumer tuning is under `NotificationConsumer:*` in `src/NotificationWorker/appsettings.json`.
+- Deployment order matters: start the updated production API and wait for its database migration to finish before starting or scaling the updated worker.
 
 ## Docker
 - Copy the sample environment file and update the secrets:
@@ -80,8 +76,7 @@
   # edit .env and set POSTGRES_PASSWORD and API_CONNECTION_STRING as needed
   ```
 - Set `ALLOWED_ORIGINS` in `.env` using a semicolon-separated list (e.g. `http://localhost:3000;https://app.example.com`). The API reads `Cors:AllowedOrigins` from that environment variable when running in Docker.
-- Development compose explicitly sets `Notifications__DispatchMode=RabbitMq` to keep the RabbitMQ + worker flow available locally.
-- Production compose explicitly sets `Notifications__DispatchMode=InProcess` so notification creation runs inside the API process.
+- Both development and production Compose run the API, notification worker, RabbitMQ, PostgreSQL, and Redis.
 - To enable distributed caching with Redis, set the connection string (example uses local Redis):
   - `Caching__Redis__ConnectionString=localhost:6379,abortConnect=false`
 - Build and run the stack (API + Postgres):
@@ -98,7 +93,7 @@
 - If you change service ports or credentials, update `.env` and rerun `docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.dev.yml up`.
 
 ## Database Lifecycle
-- In development the database initializer runs when `ASPNETCORE_ENVIRONMENT=Development`. Inside Docker it connects to the compose Postgres instance without dropping the schema.
+- In development the database initializer uses `EnsureDeletedAsync` followed by `EnsureCreatedAsync`, including when the Development environment runs in Docker. Do not start the API against a database that must be preserved.
 - For persistent environments generate migrations with:
   ```bash
   dotnet ef migrations add <MigrationName> --project src/Infrastructure --startup-project src/Web
@@ -116,26 +111,10 @@
 
 ## Heroku Container Deployment
 
-This application can be deployed to Heroku as one or two Docker process types:
+This application is deployed to Heroku as two Docker process types:
 
 - `web`: ASP.NET Core API and SignalR hub.
-- `worker`: optional notification worker that consumes RabbitMQ messages and calls the internal notification API.
-
-For the cheaper production path, use:
-
-```text
-Notifications__DispatchMode=InProcess
-```
-
-With this mode, the `worker` dyno and RabbitMQ are not required for task notifications.
-
-For development or event-driven testing, use:
-
-```text
-Notifications__DispatchMode=RabbitMq
-```
-
-With this mode, release and scale the `worker` process too.
+- `worker`: standalone RabbitMQ notification consumer.
 
 ### 1. Create and Prepare the Heroku App
 
@@ -191,7 +170,6 @@ heroku config:set \
   RabbitMq__VirtualHost="<rabbitmq-virtual-host>" \
   RabbitMq__Port=5671 \
   RabbitMq__UseSsl=true \
-  Notifications__DispatchMode=InProcess \
   WebBaseUrl="https://<app-name>.herokuapp.com/" \
   WorkerApiKey="<shared-worker-key>" \
   Cors__AllowedOrigins="http://localhost:3000;https://your-frontend.example.com" \
@@ -204,7 +182,7 @@ If structured database, Redis, or RabbitMQ settings are absent, the app falls ba
 - `REDIS_URL` -> `Caching:Redis:ConnectionString`
 - `CLOUDAMQP_URL` -> `RabbitMq:*`
 
-RabbitMQ settings are only required by the web app when `Notifications__DispatchMode=RabbitMq`. They are still required by the worker if the worker process is deployed.
+RabbitMQ settings are used by the API-hosted outbox publisher and by the standalone consumer. Task request handlers never publish directly to RabbitMQ.
 
 ### 4. Build and Push Images
 
@@ -240,31 +218,19 @@ docker push registry.heroku.com/<app-name>/worker
 
 ### 5. Release and Scale Processes
 
-Release the web process:
-
-```bash
-heroku container:release web -a <app-name>
-```
-
-For RabbitMQ mode, release both process types:
+Release both process types:
 
 ```bash
 heroku container:release web worker -a <app-name>
 ```
 
-Scale the production in-process path:
-
-```bash
-heroku ps:scale web=1 worker=0 -a <app-name>
-```
-
-Scale the RabbitMQ worker path:
+Scale both processes:
 
 ```bash
 heroku ps:scale web=1 worker=1 -a <app-name>
 ```
 
-The worker is required only for RabbitMQ-backed notifications. If `Notifications__DispatchMode=RabbitMq` and only `web` is running, queued task notification events will not be consumed.
+If only `web` is running, the API can publish outbox messages to RabbitMQ, but notification messages remain queued until the standalone consumer is restored.
 
 ### 6. Verify Deployment
 
@@ -274,13 +240,7 @@ Check dynos:
 heroku ps -a <app-name>
 ```
 
-Expected process types for in-process mode:
-
-```text
-web.1: up
-```
-
-Expected process types for RabbitMQ mode:
+Expected process types:
 
 ```text
 web.1: up
@@ -294,7 +254,7 @@ curl https://<app-name>.herokuapp.com/api/health/live
 curl https://<app-name>.herokuapp.com/api/health
 ```
 
-The ready health endpoint should report healthy PostgreSQL and Redis checks. RabbitMQ is included in health checks only when `Notifications__DispatchMode=RabbitMq`.
+The API ready health endpoint reports PostgreSQL and Redis. RabbitMQ is deliberately excluded because broker downtime must not reject API writes.
 
 Check logs:
 

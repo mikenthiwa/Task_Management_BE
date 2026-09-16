@@ -1,4 +1,5 @@
 using Application.Common.Interfaces;
+using Application.Common.Models;
 using Application.Features.Reports.command.TasksReport;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
@@ -38,7 +39,7 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
         var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
         var reportService = scope.ServiceProvider.GetRequiredService<IReportService>();
         var cloudinary = scope.ServiceProvider.GetRequiredService<Cloudinary>();
-        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+        var notificationDispatcher = scope.ServiceProvider.GetRequiredService<INotificationDispatcher>();
 
         var pendingJobs = await db.ReportJobs
             .Where(j => j.Status == "Pending")
@@ -79,13 +80,17 @@ public class ReportBackgroundWorker(IServiceScopeFactory scopeFactory, ILogger<R
                 job.FilePath = downloadUrl;
                 job.CompletedAt = DateTime.UtcNow;
                 var message = $"Your report is ready to download";
-                await notificationService.CreateNotificationAsync(
-                    job.RequestedByUserId,
-                    message,
-                    NotificationType.TasksReportGenerated,
-                    downloadUrl,
-                    "Download Report"
-                    );
+                await notificationDispatcher.DispatchAsync(
+                    new NotificationIntegrationEvent
+                    {
+                        UserId = job.RequestedByUserId,
+                        Message = message,
+                        Type = NotificationType.TasksReportGenerated,
+                        ActionUrl = downloadUrl,
+                        ActionLabel = "Download Report"
+                    },
+                    "report.completed",
+                    ct);
             }
             catch (Exception ex)
             {

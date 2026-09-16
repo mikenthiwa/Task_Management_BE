@@ -3,6 +3,7 @@ using Application.Common.Interfaces;
 using Domain.Entities;
 using Domain.ValueObjects;
 using Infrastructure.Identity;
+using Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Task = Domain.Entities.Task;
@@ -16,6 +17,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DomainUser> DomainUsers => Set<DomainUser>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<ReportJob> ReportJobs => Set<ReportJob>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {

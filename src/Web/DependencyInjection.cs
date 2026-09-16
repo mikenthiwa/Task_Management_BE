@@ -1,6 +1,9 @@
 using System.Text.Json.Serialization;
+using Application.Common.Interfaces;
 using Application.Common.Options;
 using Ardalis.GuardClauses;
+using Infrastructure.Outbox;
+using Infrastructure.RabbitMq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NSwag;
@@ -19,7 +22,23 @@ public static class DependencyInjection
         var redisConnectionString = Guard.Against.NullOrWhiteSpace(
             builder.Configuration["Caching:Redis:ConnectionString"],
             message: "Redis connection string is not configured.");
-        
+
+        builder.Services.Configure<OutboxOptions>(
+            builder.Configuration.GetSection(OutboxOptions.SectionName));
+        builder.Services.AddSingleton<IMessageBus>(serviceProvider =>
+        {
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            return new RabbitMqMessageBus(
+                configuration["RabbitMq:HostName"] ?? "localhost",
+                configuration["RabbitMq:UserName"] ?? "admin",
+                configuration["RabbitMq:Password"] ?? "admin",
+                configuration["RabbitMq:VirtualHost"] ?? "/",
+                configuration.GetValue<int?>("RabbitMq:Port") ?? 5672,
+                configuration.GetValue<bool>("RabbitMq:UseSsl"));
+        });
+        builder.Services.AddScoped<OutboxPublisher>();
+        builder.Services.AddHostedService<OutboxPublisherWorker>();
+
         builder.Services.AddOpenApi();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddEndpointsApiExplorer();
@@ -78,33 +97,6 @@ public static class DependencyInjection
             .AddNpgSql(connectionString, name: "postgresql", tags: ["ready"])
             .AddCheck<RedisHealthCheck>("redis", tags: ["ready"]);
 
-        if (IsRabbitMqNotificationDispatchEnabled(builder.Configuration))
-        {
-            healthChecks.AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: ["ready"]);
-        }
-
         return builder;
-    }
-
-    private static bool IsRabbitMqNotificationDispatchEnabled(IConfiguration configuration)
-    {
-        var configuredMode = configuration[$"{NotificationDispatchOptions.SectionName}:DispatchMode"];
-        if (!string.IsNullOrWhiteSpace(configuredMode))
-        {
-            if (configuredMode.Equals(NotificationDispatchModes.RabbitMq, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            if (configuredMode.Equals(NotificationDispatchModes.InProcess, StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            throw new InvalidOperationException(
-                $"Unsupported notification dispatch mode '{configuredMode}'. Supported values are '{NotificationDispatchModes.InProcess}' and '{NotificationDispatchModes.RabbitMq}'.");
-        }
-
-        return string.Equals(configuration["ASPNETCORE_ENVIRONMENT"], "Development", StringComparison.OrdinalIgnoreCase);
     }
 }
